@@ -13,6 +13,7 @@ npm-debug.log*
 
 # Reportes locales
 tests/accuracy_report.md
+tests/accuracy_results.json
 
 # macOS
 .DS_Store
