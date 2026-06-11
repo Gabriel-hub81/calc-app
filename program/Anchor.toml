@@ -1,0 +1,25 @@
+[toolchain]
+package_manager = "npm"
+
+[features]
+resolution = true
+skip-lint = false
+
+# El mismo keypair de programa sirve para devnet; para mainnet se genera uno
+# nuevo y se actualiza declare_id! (ver README → Deploy).
+[programs.localnet]
+calc_registry = "Gh3WhpAtc8HDUUU59amgzaxvg4nCV3V4pSN3EntBHwRL"
+
+[programs.devnet]
+calc_registry = "Gh3WhpAtc8HDUUU59amgzaxvg4nCV3V4pSN3EntBHwRL"
+
+[provider]
+# devnet para desarrollo; mainnet-beta solo en el deploy final (semana 6)
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+# Tests con LiteSVM: rápidos, deterministas, sin validador local
+test = "cargo test"
+
+[hooks]

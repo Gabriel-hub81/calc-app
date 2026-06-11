@@ -7,6 +7,7 @@ const cors = require('cors');
 const calculateRouter = require('./routes/calculate');
 const receiptRouter = require('./routes/receipt');
 const pricesRouter = require('./routes/prices');
+const verifyRouter = require('./routes/verify');
 const { createRateLimiters } = require('./middleware/rateLimit');
 const { optionalAuth } = require('./middleware/auth');
 
@@ -40,6 +41,7 @@ function createApp(options = {}) {
   app.use('/calculate', dayLimiter, minuteLimiter, optionalAuth, calculateRouter);
   app.use('/receipt', dayLimiter, minuteLimiter, receiptRouter);
   app.use('/prices', dayLimiter, minuteLimiter, pricesRouter);
+  app.use('/verify', dayLimiter, minuteLimiter, verifyRouter);
 
   // 404 amable
   app.use((_req, res) => {

@@ -98,6 +98,14 @@ Re-valida el cuadre en código (si no cuadra → 422, no se guarda), registra la
 
 "¿Qué estoy comprando más caro?" — última compra vs promedio anterior, por producto.
 
+### POST /verify (requiere login) — Capa 1: "guardar comprobante"
+
+```json
+{ "expresion": "0.15 * 800", "resultado": 120 }
+```
+
+Calcula el hash canónico `SHA256(expresion|resultado|timestamp|wallet)` y, si Solana está configurado, lo registra on-chain en el programa `calc-registry` → `{ verificado, hash, tx_id, explorer_url }`. **Si Solana falla, el cálculo igual es válido** (`registro_pendiente: true`) — la verificación nunca bloquea.
+
 ### GET /health
 
 `{ "ok": true }`
