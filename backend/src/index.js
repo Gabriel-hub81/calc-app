@@ -5,7 +5,10 @@ const helmet = require('helmet');
 const cors = require('cors');
 
 const calculateRouter = require('./routes/calculate');
+const receiptRouter = require('./routes/receipt');
+const pricesRouter = require('./routes/prices');
 const { createRateLimiters } = require('./middleware/rateLimit');
+const { optionalAuth } = require('./middleware/auth');
 
 function createApp(options = {}) {
   const app = express();
@@ -14,7 +17,6 @@ function createApp(options = {}) {
   app.set('trust proxy', 1);
 
   app.use(helmet());
-  app.use(express.json({ limit: '10kb' }));
 
   const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
     .split(',')
@@ -24,14 +26,20 @@ function createApp(options = {}) {
     cors({
       origin: allowedOrigins.length > 0 ? allowedOrigins : true,
       methods: ['GET', 'POST'],
-      allowedHeaders: ['Content-Type', 'X-Device-Id']
+      allowedHeaders: ['Content-Type', 'X-Device-Id', 'Authorization']
     })
   );
+
+  // /receipt recibe imágenes en base64 → límite de body más grande, solo ahí
+  app.use('/receipt', express.json({ limit: '12mb' }));
+  app.use(express.json({ limit: '10kb' }));
 
   app.get('/health', (_req, res) => res.json({ ok: true }));
 
   const { minuteLimiter, dayLimiter } = createRateLimiters(options.rateLimits);
-  app.use('/calculate', dayLimiter, minuteLimiter, calculateRouter);
+  app.use('/calculate', dayLimiter, minuteLimiter, optionalAuth, calculateRouter);
+  app.use('/receipt', dayLimiter, minuteLimiter, receiptRouter);
+  app.use('/prices', dayLimiter, minuteLimiter, pricesRouter);
 
   // 404 amable
   app.use((_req, res) => {

@@ -1,0 +1,18 @@
+rules_version = '2';
+
+// Reglas de producción — el modo "test" (allow read, write: if true) NUNCA
+// se despliega. El backend usa el SDK de servidor (las bypassa); estas reglas
+// protegen el acceso directo desde clientes (PWA en Sesión 3+).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // El usuario solo accede a sus propios datos
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Todo lo demás: cerrado
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

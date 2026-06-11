@@ -1,0 +1,96 @@
+[
+  {
+    "input": "hoy vendi 10 chocolates a 10 pesos que compre a 7",
+    "output": {
+      "intent": "register",
+      "registro": {
+        "tipo": "venta",
+        "items": [
+          { "nombre": "chocolates", "nombre_canonico": "chocolate", "cantidad": 10, "precio_unitario": 10, "costo_unitario": 7 }
+        ],
+        "moneda": "MXN"
+      },
+      "correcciones": {},
+      "idioma": "es"
+    }
+  },
+  {
+    "input": "compre 3 cajas de malvaviscos a 5 pesos cada una",
+    "output": {
+      "intent": "register",
+      "registro": {
+        "tipo": "compra",
+        "items": [
+          { "nombre": "cajas de malvaviscos", "nombre_canonico": "malvaviscos caja", "cantidad": 3, "precio_unitario": 5 }
+        ],
+        "moneda": "MXN"
+      },
+      "correcciones": {},
+      "idioma": "es"
+    }
+  },
+  {
+    "input": "gaste 120 de gasolina",
+    "output": {
+      "intent": "register",
+      "registro": {
+        "tipo": "gasto",
+        "items": [
+          { "nombre": "gasolina", "nombre_canonico": "gasolina", "cantidad": 1, "precio_unitario": 120 }
+        ],
+        "moneda": "MXN"
+      },
+      "correcciones": {},
+      "idioma": "es"
+    }
+  },
+  {
+    "input": "vendi tres elotes a beinte",
+    "output": {
+      "intent": "register",
+      "registro": {
+        "tipo": "venta",
+        "items": [
+          { "nombre": "elotes", "nombre_canonico": "elote", "cantidad": 3, "precio_unitario": 20 }
+        ],
+        "moneda": "MXN"
+      },
+      "correcciones": { "beinte": "veinte" },
+      "idioma": "es"
+    }
+  },
+  {
+    "input": "vendi unos collares pero no me acuerdo a cuanto",
+    "output": {
+      "intent": "register",
+      "tipo": "ambiguo",
+      "mensaje": "¿A qué precio vendiste cada collar y cuántos fueron? No quiero anotar un monto equivocado.",
+      "opciones": [],
+      "idioma": "es"
+    }
+  },
+  {
+    "input": "como voy hoy",
+    "output": {
+      "intent": "query",
+      "consulta": { "periodo": "hoy" },
+      "idioma": "es"
+    }
+  },
+  {
+    "input": "cuanto llevo vendido esta semana",
+    "output": {
+      "intent": "query",
+      "consulta": { "periodo": "semana" },
+      "idioma": "es"
+    }
+  },
+  {
+    "input": "como va el mes",
+    "output": {
+      "intent": "query",
+      "consulta": { "periodo": "mes" },
+      "idioma": "es"
+    }
+  }
+]

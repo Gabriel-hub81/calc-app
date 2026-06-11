@@ -4,6 +4,7 @@ const request = require('supertest');
 // evaluador, sin red. La accuracy contra Gemini real se mide con `npm run accuracy`.
 jest.mock('../src/services/gemini', () => ({
   parseTexto: jest.fn(),
+  parseReceipt: jest.fn(),
   MODEL: 'mock'
 }));
 

@@ -1,16 +1,36 @@
 const express = require('express');
 const { parseTexto } = require('../services/gemini');
 const { evaluateExpression, EvaluationError } = require('../services/evaluator');
+const { getStore } = require('../services/store');
+const { buildEntry, describeEntry, summarize, rangeFor, LedgerError } = require('../services/ledger');
+const { pricePointsFromEntry, alertsForItems } = require('../services/priceHelper');
 
 const router = express.Router();
 const MAX_INPUT_LENGTH = 500;
 
+const AMBIGUO = (parsed) => ({
+  ambiguo: true,
+  mensaje: parsed.mensaje,
+  opciones: parsed.opciones || [],
+  idioma_detectado: parsed.idioma || 'es'
+});
+
+const REQUIERE_LOGIN = {
+  requiere_login: true,
+  mensaje: 'Para guardar tu día, entra con tu correo o teléfono.'
+};
+
 /**
  * POST /calculate
  * Body: { texto: string, idioma?: "es"|"en"|"pt" }
- * Tres salidas posibles: éxito / ambigüedad / error.
- * El cálculo SIEMPRE se entrega sin wallet ni blockchain de por medio —
- * la verificación on-chain es una acción opcional aparte (Sesión 2).
+ *
+ * Gemini clasifica el intent del texto:
+ * - calc     → cálculo puro (sin auth; el cálculo SIEMPRE se entrega)
+ * - register → anota venta/compra/gasto (requiere auth)
+ * - query    → "¿cómo voy hoy?" (requiere auth)
+ *
+ * Toda la aritmética (resultados, totales, márgenes) la hace el código —
+ * Gemini solo estructura.
  */
 router.post('/', async (req, res) => {
   const { texto, idioma } = req.body || {};
@@ -48,14 +68,15 @@ router.post('/', async (req, res) => {
     });
   }
 
-  if (parsed.tipo === 'ambiguo') {
-    return res.json({
-      ambiguo: true,
-      mensaje: parsed.mensaje,
-      opciones: parsed.opciones || [],
-      idioma_detectado: parsed.idioma || 'es'
-    });
-  }
+  const intent = parsed.intent || 'calc';
+
+  if (intent === 'register') return handleRegister(req, res, parsed, texto.trim());
+  if (intent === 'query') return handleQuery(req, res, parsed);
+  return handleCalc(req, res, parsed);
+});
+
+function handleCalc(_req, res, parsed) {
+  if (parsed.tipo === 'ambiguo') return res.json(AMBIGUO(parsed));
 
   if (parsed.tipo === 'error') {
     return res.json({
@@ -92,6 +113,69 @@ router.post('/', async (req, res) => {
       mensaje: 'Algo salió mal al calcular. Intenta de nuevo.'
     });
   }
-});
+}
+
+async function handleRegister(req, res, parsed, textoOriginal) {
+  if (parsed.tipo === 'ambiguo') return res.json(AMBIGUO(parsed));
+  if (!req.uid) return res.status(401).json(REQUIERE_LOGIN);
+
+  let entry;
+  try {
+    entry = buildEntry(parsed.registro, { source: 'text', description: textoOriginal });
+  } catch (err) {
+    if (err instanceof LedgerError) {
+      return res.status(400).json({ error: true, mensaje: err.message, sugerencia: err.sugerencia });
+    }
+    throw err;
+  }
+
+  const store = getStore();
+  try {
+    // Alertas de precio ANTES de guardar los puntos nuevos (no contaminar el promedio)
+    const alertas =
+      entry.type === 'purchase' || entry.type === 'expense'
+        ? await alertsForItems(store, req.uid, entry.items)
+        : [];
+
+    const entryId = await store.addEntry(req.uid, entry);
+    const points = pricePointsFromEntry(entry, entryId);
+    if (points.length > 0) await store.addPricePoints(req.uid, points);
+
+    const hoy = await store.getEntries(req.uid, rangeFor('hoy'));
+    return res.json({
+      registrado: true,
+      tipo: parsed.registro.tipo,
+      mensaje: describeEntry(entry),
+      entry: { id: entryId, ...entry },
+      alertas_precio: alertas,
+      resumen_dia: summarize(hoy, 'hoy')
+    });
+  } catch (err) {
+    console.error('[store] fallo al registrar:', err.message);
+    return res.status(500).json({
+      error: true,
+      mensaje: 'No pude guardar tu registro. Intenta de nuevo en un momento.'
+    });
+  }
+}
+
+async function handleQuery(req, res, parsed) {
+  if (!req.uid) return res.status(401).json(REQUIERE_LOGIN);
+
+  const periodo = ['hoy', 'semana', 'mes'].includes(parsed.consulta?.periodo)
+    ? parsed.consulta.periodo
+    : 'hoy';
+
+  try {
+    const entries = await getStore().getEntries(req.uid, rangeFor(periodo));
+    return res.json({ consulta: true, ...summarize(entries, periodo) });
+  } catch (err) {
+    console.error('[store] fallo en consulta:', err.message);
+    return res.status(500).json({
+      error: true,
+      mensaje: 'No pude consultar tus movimientos. Intenta de nuevo en un momento.'
+    });
+  }
+}
 
 module.exports = router;

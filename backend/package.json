@@ -12,6 +12,7 @@
     "accuracy": "node scripts/accuracy.js"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^8.6.0",
     "@google/genai": "^2.8.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
