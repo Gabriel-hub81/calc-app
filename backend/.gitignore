@@ -1,0 +1,18 @@
+# Secretos — nunca al repo
+.env
+.env.*
+!.env.example
+
+# Keypairs de Solana
+*keypair*.json
+id.json
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Reportes locales
+tests/accuracy_report.md
+
+# macOS
+.DS_Store
