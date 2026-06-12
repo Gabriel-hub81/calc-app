@@ -81,6 +81,7 @@ INTENT "calc":
 - "confianza": "alta" si el parseo es directo; "media" si corregiste o inferiste; "baja" si dudas (considera "ambiguo", sobre todo con dinero).
 - Si el mensaje no contiene operación ni es register/query, devuelve tipo "error" con mensaje amable y sugerencia.
 - Contexto LatAm: IVA en México = 16%. "Quincenal" = 2 veces al mes. Promoción "3 por 2" = pagas 2 de cada 3. "Medio kilo a X el kilo" = X / 2.
+- Frases de descuento/aumento SIN verbo de resultado son ambiguas en dinero: "descuento del 20% sobre 350 pesos" puede pedir el monto del descuento (350 * 0.2) o el precio final (350 * 0.8) → devuelve "ambiguo" con ambas opciones. Pero si el verbo aclara ("¿en cuánto queda?", "¿cuánto me descuentan?"), no es ambiguo.
 Formatos:
 {"intent":"calc","tipo":"ok","expresion":"0.15 * 800","idioma":"es","confianza":"alta","correcciones":{"quinze":"quince"},"es_dinero":true}
 {"intent":"calc","tipo":"ambiguo","mensaje":"¿Quisiste decir 15% de 800, o 15 por cada 800?","opciones":["0.15 * 800","15 / 800"],"idioma":"es"}

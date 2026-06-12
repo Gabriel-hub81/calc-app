@@ -16,7 +16,11 @@
     "profile": "ama_de_casa",
     "few_shot": true,
     "has_corrections": true,
-    "corrections": { "quinze": "quince", "ochosientos": "ochocientos", "varos": "pesos" },
+    "corrections": {
+      "quinze": "quince",
+      "ochosientos": "ochocientos",
+      "varos": "pesos"
+    },
     "es_dinero": true
   },
   {
@@ -27,7 +31,10 @@
     "profile": "ama_de_casa",
     "few_shot": true,
     "has_corrections": true,
-    "corrections": { "dose": "doce", "bente": "veinte" },
+    "corrections": {
+      "dose": "doce",
+      "bente": "veinte"
+    },
     "es_dinero": true
   },
   {
@@ -48,7 +55,9 @@
     "profile": "basic",
     "few_shot": true,
     "has_corrections": true,
-    "corrections": { "mill": "mil" },
+    "corrections": {
+      "mill": "mil"
+    },
     "es_dinero": false
   },
   {
@@ -114,7 +123,11 @@
     "profile": "microempresario",
     "few_shot": false,
     "has_corrections": true,
-    "corrections": { "sincuenta": "cincuenta", "doze": "doce", "varos": "pesos" },
+    "corrections": {
+      "sincuenta": "cincuenta",
+      "doze": "doce",
+      "varos": "pesos"
+    },
     "es_dinero": true
   },
   {
@@ -125,7 +138,9 @@
     "profile": "microempresario",
     "few_shot": true,
     "has_corrections": true,
-    "corrections": { "mill": "mil" },
+    "corrections": {
+      "mill": "mil"
+    },
     "es_dinero": true,
     "note": "IVA Mexico = 16%"
   },
@@ -142,11 +157,12 @@
   {
     "id": "basic_005",
     "input": "descuento del 20 por ciento sobre 350 pesos",
-    "expected_expression": "350 * 0.8",
-    "expected_result": 280,
+    "expected_result": null,
     "profile": "basic",
     "few_shot": false,
-    "es_dinero": true
+    "es_dinero": true,
+    "ambiguous": true,
+    "note": "ambiguo real: ¿monto del descuento (70) o precio final (280)? CALC pregunta"
   },
   {
     "id": "english_002",
@@ -164,7 +180,8 @@
     "expected_result": 62.5,
     "profile": "basic",
     "few_shot": false,
-    "es_dinero": true
+    "es_dinero": true,
+    "note": "pasado = compra: el intent correcto es register; el script suma los items en codigo"
   },
   {
     "id": "basic_007",
@@ -183,7 +200,9 @@
     "profile": "basic",
     "few_shot": false,
     "has_corrections": true,
-    "corrections": { "siento": "ciento" },
+    "corrections": {
+      "siento": "ciento"
+    },
     "es_dinero": false
   },
   {
@@ -194,7 +213,9 @@
     "profile": "basic",
     "few_shot": false,
     "has_corrections": true,
-    "corrections": { "sietesientos": "setecientos" },
+    "corrections": {
+      "sietesientos": "setecientos"
+    },
     "es_dinero": false
   },
   {
@@ -215,7 +236,9 @@
     "profile": "basic",
     "few_shot": false,
     "has_corrections": true,
-    "corrections": { "mill": "mil" },
+    "corrections": {
+      "mill": "mil"
+    },
     "es_dinero": false
   },
   {
@@ -237,13 +260,17 @@
     "note": "no hay operacion matematica"
   },
   {
-    "id": "ambiguo_002",
+    "id": "basic_012",
     "input": "cuanto es mill",
-    "expected_result": null,
-    "ambiguous": true,
+    "expected_result": 1000,
     "profile": "basic",
     "few_shot": false,
-    "note": "mil de que? no hay operacion clara"
+    "note": "literal: mil = 1000 (con correccion ortografica)",
+    "expected_expression": "1000",
+    "has_corrections": true,
+    "corrections": {
+      "mill": "mil"
+    }
   },
   {
     "id": "english_003",
@@ -262,7 +289,9 @@
     "profile": "ama_de_casa",
     "few_shot": false,
     "has_corrections": true,
-    "corrections": { "dosientos": "doscientos" },
+    "corrections": {
+      "dosientos": "doscientos"
+    },
     "es_dinero": true
   },
   {

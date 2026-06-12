@@ -99,6 +99,30 @@ async function runCase(c) {
     return { ...c, outcome: parsed.tipo, detail: parsed.mensaje, pass: false };
   }
 
+  // Capa 1.5: frases en pasado ("compré 5 cosas a 12.50") son intent register —
+  // comportamiento correcto. Si el caso espera un número, sumamos los items
+  // EN CÓDIGO (como hace el ledger en producción) y comparamos.
+  if (parsed.intent === 'register') {
+    const items = parsed.registro?.items || [];
+    if (items.length > 0 && typeof c.expected_result === 'number') {
+      const total = items.reduce(
+        (s, it) => s + (it.cantidad ?? 1) * (it.precio_unitario ?? 0),
+        0
+      );
+      return {
+        ...c,
+        outcome: 'register',
+        got: total,
+        parsed_expression: `register: ${items.length} item(s)`,
+        pass: numericPass(total, c.expected_result)
+      };
+    }
+    return { ...c, outcome: 'register', detail: JSON.stringify(parsed.registro || {}), pass: false };
+  }
+  if (parsed.intent === 'query') {
+    return { ...c, outcome: 'query', pass: false };
+  }
+
   // caso numérico normal
   if (parsed.tipo !== 'ok') {
     return { ...c, outcome: parsed.tipo, detail: parsed.mensaje, pass: false };
