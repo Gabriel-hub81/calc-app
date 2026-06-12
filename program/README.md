@@ -84,6 +84,16 @@ Y `POST /verify` aplica la regla: **si Solana falla, el cálculo igual se entreg
 
 **Nota no-custodial**: en producción la transacción la firma el usuario desde su wallet embebido en el cliente (Sesión 3). El modo "backend firma" (`SOLANA_KEYPAIR_PATH`) es solo para devnet/demo y queda claramente delimitado en el código.
 
+## ⚠ Decisión pendiente antes del deploy a mainnet (semana 6)
+
+El diseño actual crea una PDA por comprobante → **~0.00145 SOL (~$0.22) de rent
+cada uno**, insubsidiable a escala. Antes de mainnet, cambiar a **evento-only**:
+la instrucción emite `CalcRegistered` sin crear cuenta; la prueba es la
+transacción misma (el link a Solscan que el usuario ya ve). Costo resultante:
+~$0.001/comprobante, pagado por CALC como fee payer patrocinado (el usuario
+firma; CALC paga; no-custodial intacto). La PDA consultable queda para el tier
+B2B. Detalle completo: `CALC_Plan_v3.md` § 11.5.
+
 ## Roadmap on-chain — hacia dónde se extiende este programa
 
 El programa es deliberadamente mínimo, pero su arquitectura (PDAs por usuario, eventos para indexación, cero custodia) está pensada para crecer hacia donde Solana **sí** agrega valor real:
