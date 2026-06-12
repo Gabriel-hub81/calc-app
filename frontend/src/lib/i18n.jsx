@@ -1,0 +1,110 @@
+import { createContext, useContext, useState } from 'react';
+
+export const TEXTS = {
+  es: {
+    tagline: '¿Qué quieres calcular o anotar?',
+    placeholder: "Escribe o habla... ej: 'cuánto es el 15% de 800 pesos'",
+    send: 'Enviar',
+    thinking: 'Pensando...',
+    login: 'Entrar',
+    logout: 'Salir',
+    loginHint: 'Entra con tu correo o teléfono',
+    history: 'Esta sesión',
+    corrected: 'corregí',
+    errorTitle: 'No entendí la operación',
+    ambiguousTitle: 'Necesito aclarar algo',
+    saveProof: 'Guardar comprobante',
+    savingProof: 'Guardando...',
+    proofSaved: 'Comprobante guardado',
+    proofPending: 'Comprobante generado — el registro en red estará disponible pronto',
+    viewProof: 'Ver comprobante',
+    myDay: 'Mi día',
+    sales: 'Ventas',
+    expenses: 'Gastos',
+    balance: 'Balance',
+    howAmI: '¿Cómo voy?',
+    pricesQ: '¿Qué estoy comprando más caro?',
+    priceAlerts: 'Avisos de precios',
+    receipt: 'Foto de ticket',
+    receiptReading: 'Leyendo tu ticket...',
+    receiptConfirmTitle: '¿Esto compraste?',
+    receiptItem: 'Artículo',
+    receiptQty: 'Cant.',
+    receiptPrice: 'Precio',
+    receiptTotal: 'Total del ticket',
+    receiptSum: 'Suma de artículos',
+    receiptOk: 'Sí, así compré',
+    receiptMismatch: 'Los artículos no cuadran con el total — revisa los renglones',
+    receiptLoginFirst: 'Entra para guardar tu compra',
+    confidence: { alta: 'Confianza alta', media: 'Revisa el resultado', baja: 'Revísalo con cuidado' },
+    comingSoon: 'En desarrollo',
+    visionTitle: '¿Qué viene?',
+    vision1t: 'Mis cuentas',
+    vision1d: 'Ingresos y gastos de tu negocio, claros y al día.',
+    vision2t: 'Tanda digital',
+    vision2d: 'Ahorra en grupo, sin intermediario y sin pierde.',
+    vision3t: 'CALC en WhatsApp',
+    vision3d: 'Tu copiloto en el chat que ya usas todos los días.',
+    needLogin: 'Para guardar tu día, entra con tu correo o teléfono.',
+    genericError: 'Algo salió mal. Intenta de nuevo.'
+  },
+  en: {
+    tagline: 'What do you want to calculate or note down?',
+    placeholder: "Type or speak... e.g. 'what is 15% of 800 dollars'",
+    send: 'Send',
+    thinking: 'Thinking...',
+    login: 'Sign in',
+    logout: 'Sign out',
+    loginHint: 'Sign in with your email or phone',
+    history: 'This session',
+    corrected: 'corrected',
+    errorTitle: "I didn't understand the operation",
+    ambiguousTitle: 'I need to clarify something',
+    saveProof: 'Save receipt',
+    savingProof: 'Saving...',
+    proofSaved: 'Proof saved',
+    proofPending: 'Proof generated — network record coming soon',
+    viewProof: 'View proof',
+    myDay: 'My day',
+    sales: 'Sales',
+    expenses: 'Expenses',
+    balance: 'Balance',
+    howAmI: 'How am I doing?',
+    pricesQ: 'What am I overpaying for?',
+    priceAlerts: 'Price alerts',
+    receipt: 'Receipt photo',
+    receiptReading: 'Reading your receipt...',
+    receiptConfirmTitle: 'Is this what you bought?',
+    receiptItem: 'Item',
+    receiptQty: 'Qty',
+    receiptPrice: 'Price',
+    receiptTotal: 'Receipt total',
+    receiptSum: 'Items sum',
+    receiptOk: "Yes, that's right",
+    receiptMismatch: "Items don't add up to the total — check the lines",
+    receiptLoginFirst: 'Sign in to save your purchase',
+    confidence: { alta: 'High confidence', media: 'Double-check the result', baja: 'Check carefully' },
+    comingSoon: 'In progress',
+    visionTitle: "What's next?",
+    vision1t: 'My books',
+    vision1d: 'Your business income and expenses, clear and current.',
+    vision2t: 'Digital savings circle',
+    vision2d: 'Save as a group, no middleman, no losses.',
+    vision3t: 'CALC on WhatsApp',
+    vision3d: 'Your copilot in the chat you already use every day.',
+    needLogin: 'To save your day, sign in with your email or phone.',
+    genericError: 'Something went wrong. Try again.'
+  }
+};
+
+const LangContext = createContext(null);
+
+export function LangProvider({ children }) {
+  const [lang, setLang] = useState('es');
+  const t = TEXTS[lang];
+  return <LangContext.Provider value={{ lang, setLang, t }}>{children}</LangContext.Provider>;
+}
+
+export function useLang() {
+  return useContext(LangContext);
+}
