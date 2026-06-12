@@ -10,7 +10,7 @@ CALC es un copiloto financiero en lenguaje natural sobre Solana para la economí
 |---------|-----------|--------|
 | `backend/` | API Node.js: parseo NL + registro del día + recibos (Gemini Vision) + helper de precios | ✅ Sesiones 1 y 1.5 |
 | `program/` | Programa Solana (Anchor 1.0.2): calc-registry, verificación opcional | ✅ Sesión 2 |
-| `frontend/` | PWA React mobile-first con wallet embebido no-custodial | Pendiente (Sesión 3) |
+| `frontend/` | PWA React 19 mobile-first: voz, cámara, wallet embebido (demo/Privy) | ✅ Sesión 3 |
 
 ## Arquitectura
 
