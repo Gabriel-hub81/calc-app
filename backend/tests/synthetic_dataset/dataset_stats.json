@@ -1,0 +1,48 @@
+{
+  "generated_at": "2026-07-13T14:24:59.373Z",
+  "files": [
+    "ama_de_casa_claude.jsonl",
+    "estudiante_claude.jsonl",
+    "microempresario_claude.jsonl"
+  ],
+  "total_valid": 150,
+  "total_flagged": 0,
+  "by_file": {
+    "ama_de_casa_claude.jsonl": 50,
+    "estudiante_claude.jsonl": 50,
+    "microempresario_claude.jsonl": 50
+  },
+  "by_intent": {
+    "calc": 75,
+    "register": 30,
+    "query": 15,
+    "ambiguous": 15,
+    "error": 15
+  },
+  "by_difficulty": {
+    "easy": 70,
+    "medium": 67,
+    "hard": 13
+  },
+  "by_tag": {
+    "money": 124,
+    "mixed_units": 3,
+    "tip": 1,
+    "percentage": 13,
+    "voice": 15,
+    "colloquial": 31,
+    "spelling_error": 22,
+    "recipe": 2,
+    "promo": 3,
+    "fractions": 6,
+    "homework": 12,
+    "chat_abbrev": 10,
+    "english_mix": 6,
+    "wholesale": 9,
+    "margin": 13,
+    "iva": 2,
+    "inventory": 5,
+    "fiado": 3
+  },
+  "flagged": []
+}
