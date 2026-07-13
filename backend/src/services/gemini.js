@@ -116,11 +116,43 @@ function extractJson(text) {
   // Tolerante a fences de markdown por si el modelo los agrega pese a la instrucción
   const cleaned = String(text).replace(/```(?:json)?/g, '').trim();
   const start = cleaned.indexOf('{');
-  const end = cleaned.lastIndexOf('}');
-  if (start === -1 || end === -1) {
+  if (start === -1) {
     throw new Error(`Respuesta de Gemini sin JSON: ${String(text).slice(0, 200)}`);
   }
-  return JSON.parse(cleaned.slice(start, end + 1));
+  // Extrae el PRIMER objeto balanceado: en modo degradado el modelo a veces
+  // concatena el mismo objeto dos veces, y rebanar hasta el último "}" los junta.
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < cleaned.length; i++) {
+    const ch = cleaned[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') inString = false;
+    } else if (ch === '"') inString = true;
+    else if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) return JSON.parse(cleaned.slice(start, i + 1));
+    }
+  }
+  throw new Error(`Respuesta de Gemini con JSON truncado: ${cleaned.slice(0, 200)}`);
+}
+
+// Reintenta cuando el modelo devuelve JSON roto (truncado/corrupto): con
+// temperature 0 y sin side-effects, pedir de nuevo es seguro. Jamás se "repara"
+// un JSON de dinero a mano — o parsea completo, o se vuelve a pedir.
+async function generateJson(ai, request, maxRetries = 2) {
+  for (let attempt = 0; ; attempt++) {
+    const response = await ai.models.generateContent(request);
+    try {
+      return extractJson(response.text);
+    } catch (err) {
+      if (attempt >= maxRetries) throw err;
+      console.warn(`Gemini devolvió JSON inválido, reintentando (${attempt + 1}/${maxRetries}): ${err.message}`);
+    }
+  }
 }
 
 /**
@@ -133,7 +165,7 @@ async function parseTexto(texto, idioma) {
   const ai = getClient();
   const userContent = idioma ? `[idioma sugerido: ${idioma}] ${texto}` : texto;
 
-  const response = await ai.models.generateContent({
+  const parsed = await generateJson(ai, {
     model: MODEL,
     contents: userContent,
     config: {
@@ -142,8 +174,6 @@ async function parseTexto(texto, idioma) {
       temperature: 0
     }
   });
-
-  const parsed = extractJson(response.text);
   parsed.intent = parsed.intent || 'calc';
   if (!['calc', 'register', 'query'].includes(parsed.intent)) {
     throw new Error(`Intent inesperado de Gemini: ${parsed.intent}`);
@@ -174,7 +204,7 @@ FORMATO:
  */
 async function parseReceipt(imagenBase64, mimeType = 'image/jpeg') {
   const ai = getClient();
-  const response = await ai.models.generateContent({
+  const parsed = await generateJson(ai, {
     model: MODEL,
     contents: [
       { inlineData: { data: imagenBase64, mimeType } },
@@ -186,12 +216,10 @@ async function parseReceipt(imagenBase64, mimeType = 'image/jpeg') {
       temperature: 0
     }
   });
-
-  const parsed = extractJson(response.text);
   if (!Array.isArray(parsed.items)) {
     throw new Error('Gemini Vision no devolvió items del ticket');
   }
   return parsed;
 }
 
-module.exports = { parseTexto, parseReceipt, buildSystemPrompt, MODEL };
+module.exports = { parseTexto, parseReceipt, buildSystemPrompt, extractJson, MODEL };

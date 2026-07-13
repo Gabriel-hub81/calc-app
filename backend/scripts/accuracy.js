@@ -51,14 +51,16 @@ async function parseWithRetry(input, maxRetries = 4) {
       const msg = String(err.message || err);
       const is429 = msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED');
       const is503 = msg.includes('503') || msg.includes('UNAVAILABLE');
+      // Servicio degradado: JSON truncado/corrupto (gemini.js ya reintentó 2x internamente)
+      const isBadJson = err instanceof SyntaxError || /JSON/i.test(msg);
       // Cuota DIARIA agotada: reintentar no sirve — abortamos la corrida
       if (is429 && msg.includes('PerDay')) {
         throw new DailyQuotaError('Cuota diaria del free tier agotada (20 req/día por modelo).');
       }
-      if (attempt >= maxRetries || (!is429 && !is503)) throw err;
+      if (attempt >= maxRetries || (!is429 && !is503 && !isBadJson)) throw err;
       const m = msg.match(/retry in ([\d.]+)s/i) || msg.match(/"retryDelay":"(\d+(?:\.\d+)?)s"/);
-      const wait = m ? (parseFloat(m[1]) + 2) * 1000 : is429 ? 62000 : 20000;
-      console.log(`   ⏳ límite de API (${is429 ? '429' : '503'}) — reintento en ${Math.round(wait / 1000)}s (${attempt + 1}/${maxRetries})`);
+      const wait = m ? (parseFloat(m[1]) + 2) * 1000 : is429 ? 62000 : isBadJson ? 5000 : 20000;
+      console.log(`   ⏳ ${isBadJson ? 'JSON inválido del modelo' : `límite de API (${is429 ? '429' : '503'})`} — reintento en ${Math.round(wait / 1000)}s (${attempt + 1}/${maxRetries})`);
       await sleep(wait);
     }
   }
