@@ -6,8 +6,24 @@ import { useLang } from '../lib/i18n';
 import { txUrl } from '../lib/solanaExplorer';
 import ConfidenceBar from './ConfidenceBar';
 
+// Separador de miles SIN perder precisión: hasta 10 decimales — el default de
+// toLocaleString (3) truncaría resultados no-dinero como 1/3. Dinero: 0 errores.
+function formatResultado(valor, lang) {
+  const n = Number(valor);
+  if (!Number.isFinite(n)) return String(valor);
+  return n.toLocaleString(lang === 'en' ? 'en-US' : 'es-MX', {
+    maximumFractionDigits: 10
+  });
+}
+
+// La expresión que CALC realmente evaluó, en símbolos de calculadora:
+// transparencia para que la usuaria verifique qué se entendió.
+function prettyExpresion(expr) {
+  return String(expr).replace(/\*/g, '×').replace(/\//g, '÷');
+}
+
 export default function ResultCard({ kind, data }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { user, getToken } = useAuth();
   const [proof, setProof] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -35,9 +51,15 @@ export default function ResultCard({ kind, data }) {
     <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
       {kind === 'resultado' ? (
         <>
+          <p className="text-sm font-medium text-slate-500">{t.resultIs}</p>
           <p className="text-4xl font-extrabold tracking-tight text-slate-900">
-            {data.resultado}
+            {formatResultado(data.resultado, lang)}
           </p>
+          {data.expresion_parseada && (
+            <p className="mt-1 font-mono text-sm text-slate-500">
+              = {prettyExpresion(data.expresion_parseada)}
+            </p>
+          )}
           <p className="mt-1 text-slate-600">{data.texto_original}</p>
         </>
       ) : (
