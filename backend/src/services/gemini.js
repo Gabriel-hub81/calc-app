@@ -140,12 +140,19 @@ function extractJson(text) {
   throw new Error(`Respuesta de Gemini con JSON truncado: ${cleaned.slice(0, 200)}`);
 }
 
-// Reintenta cuando el modelo devuelve JSON roto (truncado/corrupto): con
-// temperature 0 y sin side-effects, pedir de nuevo es seguro. Jamás se "repara"
-// un JSON de dinero a mano — o parsea completo, o se vuelve a pedir.
+// Reintenta cuando el modelo devuelve JSON roto (truncado/corrupto): pedir de
+// nuevo no tiene side-effects. Jamás se "repara" un JSON de dinero a mano — o
+// parsea completo, o se vuelve a pedir. Los reintentos van con temperature 0.3:
+// hay inputs donde Gemini trunca el JSON con finishReason STOP de forma
+// determinista, y a temperature 0 el reintento reproduce el mismo corte.
+const RETRY_TEMPERATURE = 0.3;
+
 async function generateJson(ai, request, maxRetries = 2) {
   for (let attempt = 0; ; attempt++) {
-    const response = await ai.models.generateContent(request);
+    const attemptRequest = attempt === 0
+      ? request
+      : { ...request, config: { ...request.config, temperature: RETRY_TEMPERATURE } };
+    const response = await ai.models.generateContent(attemptRequest);
     try {
       return extractJson(response.text);
     } catch (err) {
@@ -222,4 +229,4 @@ async function parseReceipt(imagenBase64, mimeType = 'image/jpeg') {
   return parsed;
 }
 
-module.exports = { parseTexto, parseReceipt, buildSystemPrompt, extractJson, MODEL };
+module.exports = { parseTexto, parseReceipt, buildSystemPrompt, extractJson, generateJson, MODEL };
