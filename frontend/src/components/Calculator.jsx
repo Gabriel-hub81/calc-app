@@ -82,7 +82,7 @@ export default function Calculator({ setDia, setAlertas }) {
           rows={2}
           className="w-full resize-none bg-transparent text-lg outline-none placeholder:text-slate-400"
         />
-        <div className="mt-2 flex items-center justify-between">
+        <div className="relative mt-2 flex items-center justify-between">
           <div className="flex items-center gap-1">
             <VoiceButton onText={(v) => setTexto(v)} />
             <ReceiptCapture onFile={receipt.read} reading={receipt.reading} />
