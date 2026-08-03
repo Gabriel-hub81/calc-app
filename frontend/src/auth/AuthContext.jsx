@@ -71,7 +71,10 @@ function PrivyAdapter({ children }) {
 }
 
 export function AuthProvider({ children }) {
-  if (!PRIVY_APP_ID) {
+  // Privy necesita contexto seguro (HTTPS o localhost) para su criptografía
+  // (WebCrypto): en HTTP de red local —pruebas desde el celular— tronaría en
+  // pantalla blanca. Ahí caemos a modo demo: calcular siempre funciona.
+  if (!PRIVY_APP_ID || !window.isSecureContext) {
     return <DemoAuthProvider>{children}</DemoAuthProvider>;
   }
   return (
