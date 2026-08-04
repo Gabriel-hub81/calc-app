@@ -23,9 +23,21 @@ function createApp(options = {}) {
     .split(',')
     .map((o) => o.trim())
     .filter(Boolean);
+  // Fuera de producción también se aceptan orígenes de red privada (probar
+  // desde el celular en el mismo WiFi) — la IP de la máquina cambia y no
+  // vamos a perseguirla en .env. En producción manda ALLOWED_ORIGINS, punto.
+  const isPrivateLan = (origin) =>
+    process.env.NODE_ENV !== 'production' &&
+    /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}):\d+$/.test(origin);
   app.use(
     cors({
-      origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+      origin(origin, cb) {
+        if (!origin || allowedOrigins.includes(origin) || isPrivateLan(origin)) {
+          return cb(null, true);
+        }
+        if (allowedOrigins.length === 0) return cb(null, true);
+        return cb(null, false);
+      },
       methods: ['GET', 'POST'],
       allowedHeaders: ['Content-Type', 'X-Device-Id', 'Authorization']
     })
