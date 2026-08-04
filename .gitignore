@@ -12,3 +12,6 @@ node_modules/
 
 # macOS
 .DS_Store
+
+# Generado por el build de producción (Dockerfile)
+backend/public/

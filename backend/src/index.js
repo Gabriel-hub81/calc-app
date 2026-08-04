@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -17,7 +19,10 @@ function createApp(options = {}) {
   // Cloud Run corre detrás de un proxy
   app.set('trust proxy', 1);
 
-  app.use(helmet());
+  // CSP desactivada: este servicio también sirve la PWA, y el SDK de Privy
+  // necesita conectarse/embeber iframes de privy.io — una CSP estricta lo
+  // rompería en silencio. El resto de cabeceras de helmet siguen activas.
+  app.use(helmet({ contentSecurityPolicy: false }));
 
   const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
     .split(',')
@@ -54,6 +59,19 @@ function createApp(options = {}) {
   app.use('/receipt', dayLimiter, minuteLimiter, receiptRouter);
   app.use('/prices', dayLimiter, minuteLimiter, pricesRouter);
   app.use('/verify', dayLimiter, minuteLimiter, verifyRouter);
+
+  // En producción el mismo servicio sirve la PWA (carpeta public/, generada
+  // por el build del frontend en el Dockerfile). Un solo origen = sin CORS.
+  const staticDir = path.join(__dirname, '..', 'public');
+  const indexHtml = path.join(staticDir, 'index.html');
+  if (fs.existsSync(indexHtml)) {
+    app.use(express.static(staticDir));
+    // Fallback SPA: cualquier GET que no sea del API devuelve la app
+    app.use((req, res, next) => {
+      if (req.method !== 'GET') return next();
+      res.sendFile(indexHtml);
+    });
+  }
 
   // 404 amable
   app.use((_req, res) => {

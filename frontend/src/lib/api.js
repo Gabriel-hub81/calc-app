@@ -1,9 +1,14 @@
-// Sin VITE_BACKEND_URL explícita, el backend vive en el mismo host que sirvió
-// la página (puerto 8080): funciona en localhost Y desde el celular por red
-// local aunque la IP de la máquina cambie.
+// Sin VITE_BACKEND_URL explícita:
+// - En desarrollo (Vite en :5173/:4173) el backend vive en el mismo host,
+//   puerto 8080 — funciona en localhost Y desde el celular aunque cambie la IP.
+// - En producción el backend sirve también el frontend, así que es el mismo
+//   origen (BASE vacío) — sin CORS, sin puertos.
+const DEV_PORTS = ['5173', '4173'];
 const BASE =
   import.meta.env.VITE_BACKEND_URL ||
-  `${window.location.protocol}//${window.location.hostname}:8080`;
+  (DEV_PORTS.includes(window.location.port)
+    ? `${window.location.protocol}//${window.location.hostname}:8080`
+    : '');
 
 // Identificador de dispositivo para rate limiting (no es dato financiero)
 function deviceId() {

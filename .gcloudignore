@@ -1,0 +1,11 @@
+# Contexto que sube gcloud run deploy --source (espejo de .dockerignore)
+.git
+.gitignore
+**/node_modules
+frontend/dist
+program
+**/.env
+**/.env.*
+*keypair*.json
+id.json
+.DS_Store

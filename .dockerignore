@@ -1,0 +1,10 @@
+# Nada de secretos ni artefactos locales en el contexto de build
+.git
+**/node_modules
+frontend/dist
+program
+**/.env
+**/.env.*
+*keypair*.json
+id.json
+.DS_Store
