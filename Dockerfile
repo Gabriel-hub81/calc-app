@@ -25,7 +25,7 @@ COPY backend/package*.json ./
 RUN npm ci --omit=dev
 COPY backend/src/ ./src/
 # El system prompt carga los few-shot desde los casos de prueba
-COPY backend/tests/test_cases.json ./tests/test_cases.json
+COPY backend/tests/test_cases.json backend/tests/intent_cases.json ./tests/
 COPY --from=frontend-build /fe/dist/ ./public/
 
 ENV NODE_ENV=production
