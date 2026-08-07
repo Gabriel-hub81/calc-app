@@ -27,7 +27,9 @@ export default defineConfig({
         icons: [
           { src: '/pwa-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/pwa-512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+          // maskable: sin esquinas redondeadas propias y con margen, para que
+          // Android lo recorte a su forma sin morder el «=»
+          { src: '/pwa-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
         ]
       }
     })

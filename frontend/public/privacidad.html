@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CALC — Aviso de privacidad</title>
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; background: #f8fafc; color: #0f172a; line-height: 1.6; }
+  .page { max-width: 720px; margin: 0 auto; background: #fff; padding: 28px 24px 60px; }
+  header { display: flex; align-items: center; gap: 12px; border-bottom: 3px solid #10b981; padding-bottom: 14px; margin-bottom: 8px; }
+  h1 { font-size: 24px; margin: 0; }
+  .date { color: #64748b; font-size: 13px; margin: 4px 0 0; }
+  h2 { font-size: 17px; margin: 28px 0 8px; color: #065f46; }
+  p, li { font-size: 15px; }
+  .box { background: #ecfdf5; border-radius: 12px; padding: 16px; margin: 18px 0; }
+  .box p { margin: 0 0 8px; }
+  .box p:last-child { margin: 0; }
+  .warn { background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 0 10px 10px 0; padding: 14px 16px; margin: 16px 0; font-size: 14.5px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  th { background: #f1f5f9; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: #475569; }
+  .back { display: inline-block; margin-top: 30px; color: #059669; font-weight: 600; text-decoration: none; font-size: 14px; }
+  footer { margin-top: 26px; border-top: 1px solid #e2e8f0; padding-top: 14px; color: #64748b; font-size: 13px; }
+  code { background: #f1f5f9; padding: 2px 6px; border-radius: 5px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <svg width="46" height="46" viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="14" fill="#0f172a"/>
+      <rect x="15" y="21" width="34" height="7.5" rx="3.75" fill="#34d399"/>
+      <rect x="15" y="35.5" width="34" height="7.5" rx="3.75" fill="#34d399"/>
+    </svg>
+    <div>
+      <h1>Aviso de privacidad</h1>
+      <p class="date">CALC · Versión de prueba (beta) · Actualizado en agosto de 2026</p>
+    </div>
+  </header>
+
+  <div class="box">
+    <p><b>En corto, y sin letras chiquitas:</b></p>
+    <p>• CALC <b>nunca toca tu dinero</b>. No lo recibe, no lo guarda, no lo mueve.</p>
+    <p>• Guardamos <b>lo que anotas</b> (tus ventas, gastos y precios) para poder mostrarte cómo vas. Nada más.</p>
+    <p>• <b>No vendemos ni compartimos</b> tus datos con nadie para publicidad. No hay rastreadores ni cookies de publicidad.</p>
+    <p>• Puedes pedir que <b>borremos todo</b> cuando quieras.</p>
+  </div>
+
+  <h2>1. Quién es responsable</h2>
+  <p>CALC es un proyecto en fase de pruebas. La persona responsable del tratamiento de tus datos es la responsable del proyecto CALC, a quien puedes escribir al correo indicado al final de este aviso.</p>
+
+  <h2>2. Qué datos tratamos y para qué</h2>
+  <table>
+    <tr><th>Dato</th><th>Para qué</th><th>Dónde vive</th></tr>
+    <tr>
+      <td>Tu identificador de cuenta</td>
+      <td>Saber que tus anotaciones son tuyas y de nadie más</td>
+      <td>Nuestra base de datos (Google Firestore)</td>
+    </tr>
+    <tr>
+      <td>Tus anotaciones: el texto que escribes o dictas, los artículos, cantidades, precios, totales y la fecha</td>
+      <td>Calcular tu día, tu semana y tu mes, y avisarte si un producto te está subiendo de precio</td>
+      <td>Nuestra base de datos (Google Firestore)</td>
+    </tr>
+    <tr>
+      <td>Fotos de tickets</td>
+      <td>Leer los renglones de tu compra</td>
+      <td><b>No las guardamos.</b> Se procesan y se descartan</td>
+    </tr>
+    <tr>
+      <td>Un número al azar que identifica tu dispositivo</td>
+      <td>Evitar abusos del servicio (límite de uso por día)</td>
+      <td>En tu propio teléfono; en nuestro servidor solo temporalmente</td>
+    </tr>
+    <tr>
+      <td>Tu correo o teléfono</td>
+      <td>Que puedas entrar sin contraseña</td>
+      <td><b>No los guardamos nosotros.</b> Los administra Privy (ver punto 3)</td>
+    </tr>
+  </table>
+  <p>No pedimos ni guardamos tu nombre, tu dirección, tu CURP, ni datos de tarjetas o cuentas bancarias.</p>
+
+  <h2>3. Con quién se comparten (y por qué es necesario)</h2>
+  <ul>
+    <li><b>Google (Gemini):</b> para entender lo que dices, el texto que escribes o dictas y la foto de tu ticket se envían a la inteligencia artificial de Google. Es lo que permite que le hables con tus palabras. Google los trata conforme a sus propios términos.</li>
+    <li><b>Google Cloud:</b> aloja el servicio y la base de datos donde se guardan tus anotaciones.</li>
+    <li><b>Privy:</b> administra tu entrada a la app con correo o teléfono, y crea tu monedero digital. Tu correo y teléfono los conoce Privy, no nosotros.</li>
+    <li><b>Red Solana (solo si tú lo pides):</b> ver el punto 4.</li>
+  </ul>
+  <p>No compartimos tus datos con nadie más, y <b>ningún otro usuario puede ver tus anotaciones ni tus precios.</b></p>
+
+  <h2>4. Los comprobantes en blockchain</h2>
+  <p>Si tocas «Guardar comprobante», se publica en la red Solana <b>únicamente una huella digital</b> (un código irreversible calculado a partir del cálculo). <b>No se publica ni el monto, ni el texto, ni lo que vendiste, ni quién eres.</b></p>
+  <div class="warn">
+    <b>Importante y honesto:</b> lo que se escribe en una blockchain es público y <b>no se puede borrar nunca</b>, ni por nosotros ni por nadie. Por eso este paso siempre es tu decisión: nada se publica solo. Además, aunque la huella no revela tus datos directamente, no la consideramos un secreto perfecto: es una prueba de que un cálculo existió, no una caja fuerte.
+  </div>
+
+  <h2>5. Cuánto tiempo los guardamos</h2>
+  <p>Mientras uses CALC, tus anotaciones se conservan para poder mostrarte tu historial. Si nos pides que borremos tu información, lo hacemos. Al estar en fase de pruebas, aún no hay un botón dentro de la app para borrar tu cuenta: se hace por correo (punto 7) y estamos trabajando en el botón.</p>
+
+  <h2>6. Cómo la cuidamos</h2>
+  <ul>
+    <li>Todo viaja cifrado (HTTPS) entre tu teléfono y el servidor.</li>
+    <li>La base de datos está separada por usuario: cada quien solo puede llegar a lo suyo.</li>
+    <li>Las llaves y credenciales del sistema se guardan en un almacén de secretos, nunca en el código.</li>
+    <li>No usamos herramientas de analítica, publicidad ni rastreo de terceros. No hay cookies publicitarias.</li>
+  </ul>
+  <div class="warn">
+    CALC está en <b>fase de pruebas</b>. Aunque cuidamos tus datos con seriedad, todavía no ha pasado una auditoría de seguridad externa. Te recomendamos no anotar información sensible que no necesites para tus cuentas.
+  </div>
+
+  <h2>7. Tus derechos</h2>
+  <p>Puedes pedirnos en cualquier momento: <b>saber qué tenemos tuyo</b>, <b>corregirlo</b>, <b>borrarlo</b> u <b>oponerte</b> a que lo usemos (derechos ARCO, conforme a la ley mexicana de protección de datos personales en posesión de particulares). Basta con escribirnos y te respondemos.</p>
+  <p><b>Contacto:</b> mientras CALC está en pruebas cerradas, puedes pedírnoslo directamente a la persona que te compartió la app, o por el mismo medio por el que recibiste la invitación. Te confirmamos el borrado por escrito.</p>
+  <p>Una aclaración: lo que ya se publicó en la blockchain porque tú lo pediste no se puede borrar (punto 4). Todo lo demás sí.</p>
+
+  <h2>8. Menores de edad</h2>
+  <p>CALC está pensado para personas mayores de edad que llevan las cuentas de su negocio o su casa.</p>
+
+  <h2>9. Cambios a este aviso</h2>
+  <p>Si cambiamos algo importante, actualizaremos la fecha de arriba y te lo haremos saber dentro de la app.</p>
+
+  <a class="back" href="/">← Volver a CALC</a>
+
+  <footer>
+    CALC no es un banco ni una institución financiera. No recibe, custodia ni transfiere dinero: solo te ayuda a llevar tus cuentas.
+  </footer>
+</div>
+</body>
+</html>

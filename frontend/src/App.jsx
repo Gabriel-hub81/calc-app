@@ -5,6 +5,8 @@ import Calculator from './components/Calculator';
 import DayPanel from './components/DayPanel';
 import VisionSection from './components/VisionSection';
 import AuthButton from './components/AuthButton';
+import { LogoMark } from './components/Logo';
+import PrivacyNotice from './components/PrivacyNotice';
 
 function Shell() {
   const { t, lang, setLang } = useLang();
@@ -18,9 +20,7 @@ function Shell() {
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-calc text-lg font-black text-white">
-              =
-            </span>
+            <LogoMark className="h-8 w-8 text-slate-900" />
             <span className="text-xl font-extrabold tracking-tight">CALC</span>
           </div>
           <div className="flex items-center gap-2">
@@ -41,6 +41,7 @@ function Shell() {
         <Calculator setDia={setDia} setAlertas={setAlertas} />
         {user && <DayPanel dia={dia} setDia={setDia} alertas={alertas} />}
         <VisionSection />
+        <PrivacyNotice />
       </main>
     </div>
   );
