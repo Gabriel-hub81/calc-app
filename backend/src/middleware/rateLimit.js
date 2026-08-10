@@ -15,6 +15,24 @@ const FRIENDLY_429 = {
   sugerencia: 'Puedes volver a intentar en unos segundos.'
 };
 
+// Techo por IP que NO se puede rotar. El límite por dispositivo es cómodo pero
+// su clave la manda el cliente: basta cambiar X-Device-Id en cada petición para
+// estrenar cuota. Este segundo límite cuenta siempre por IP, con topes altos
+// para no castigar redes móviles compartidas (CGNAT), donde muchas personas
+// legítimas salen por la misma dirección.
+function createIpLimiters({ ipPerMinute = 240, ipPerDay = 5000 } = {}) {
+  const common = {
+    keyGenerator: (req) => ipKeyGenerator(req.ip),
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: FRIENDLY_429
+  };
+  return {
+    ipMinuteLimiter: rateLimit({ ...common, windowMs: 60 * 1000, limit: ipPerMinute }),
+    ipDayLimiter: rateLimit({ ...common, windowMs: 24 * 60 * 60 * 1000, limit: ipPerDay })
+  };
+}
+
 function createRateLimiters({ perMinute = 60, perDay = 1000 } = {}) {
   const minuteLimiter = rateLimit({
     windowMs: 60 * 1000,
@@ -37,4 +55,4 @@ function createRateLimiters({ perMinute = 60, perDay = 1000 } = {}) {
   return { minuteLimiter, dayLimiter };
 }
 
-module.exports = { createRateLimiters, deviceKey };
+module.exports = { createRateLimiters, createIpLimiters, deviceKey };

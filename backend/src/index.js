@@ -10,8 +10,8 @@ const calculateRouter = require('./routes/calculate');
 const receiptRouter = require('./routes/receipt');
 const pricesRouter = require('./routes/prices');
 const verifyRouter = require('./routes/verify');
-const { createRateLimiters } = require('./middleware/rateLimit');
-const { optionalAuth } = require('./middleware/auth');
+const { createRateLimiters, createIpLimiters } = require('./middleware/rateLimit');
+const { optionalAuth, requireAuth } = require('./middleware/auth');
 
 function createApp(options = {}) {
   const app = express();
@@ -55,10 +55,15 @@ function createApp(options = {}) {
   app.get('/health', (_req, res) => res.json({ ok: true }));
 
   const { minuteLimiter, dayLimiter } = createRateLimiters(options.rateLimits);
-  app.use('/calculate', dayLimiter, minuteLimiter, optionalAuth, calculateRouter);
-  app.use('/receipt', dayLimiter, minuteLimiter, receiptRouter);
-  app.use('/prices', dayLimiter, minuteLimiter, pricesRouter);
-  app.use('/verify', dayLimiter, minuteLimiter, verifyRouter);
+  const { ipMinuteLimiter, ipDayLimiter } = createIpLimiters(options.ipRateLimits);
+  const limits = [ipDayLimiter, ipMinuteLimiter, dayLimiter, minuteLimiter];
+
+  app.use('/calculate', ...limits, optionalAuth, calculateRouter);
+  // Leer un ticket es la operación más cara (Gemini Vision sobre una imagen):
+  // exige sesión para que el costo esté siempre atado a una persona real.
+  app.use('/receipt', ...limits, requireAuth, receiptRouter);
+  app.use('/prices', ...limits, pricesRouter);
+  app.use('/verify', ...limits, verifyRouter);
 
   // En producción el mismo servicio sirve la PWA (carpeta public/, generada
   // por el build del frontend en el Dockerfile). Un solo origen = sin CORS.

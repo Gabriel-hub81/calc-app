@@ -152,6 +152,7 @@ describe('POST /receipt — propuesta, cuadre y confirmación', () => {
     parseReceipt.mockResolvedValue(ticket([aceite(45), { ...aceite(20), name_raw: 'JABON', name_canonical: 'jabon' }], 65));
     const res = await request(app)
       .post('/receipt')
+      .set(auth('user1'))
       .send({ imagen_base64: 'Zm90bw==', mime_type: 'image/jpeg' });
 
     expect(res.status).toBe(200);
@@ -169,6 +170,7 @@ describe('POST /receipt — propuesta, cuadre y confirmación', () => {
     parseReceipt.mockResolvedValue(ticket([aceite(45), { ...aceite(20), name_canonical: 'jabon' }], 100));
     const res = await request(app)
       .post('/receipt')
+      .set(auth('user1'))
       .send({ imagen_base64: 'Zm90bw==' });
 
     expect(res.body.status).toBe('mismatch');
@@ -209,8 +211,16 @@ describe('POST /receipt — propuesta, cuadre y confirmación', () => {
   });
 
   test('sin imagen → 400', async () => {
-    const res = await request(app).post('/receipt').send({});
+    const res = await request(app).post('/receipt').set(auth('user1')).send({});
     expect(res.status).toBe(400);
+  });
+
+  test('leer ticket sin login → 401 (la operación más cara exige sesión)', async () => {
+    const res = await request(app)
+      .post('/receipt')
+      .send({ imagen_base64: 'Zm90bw==', mime_type: 'image/jpeg' });
+    expect(res.status).toBe(401);
+    expect(res.body.requiere_login).toBe(true);
   });
 });
 
