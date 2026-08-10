@@ -19,7 +19,7 @@ Funciona sin registro (calculadora); entrar con correo o teléfono habilita guar
 
 - **El LLM nunca hace aritmética.** Gemini traduce lenguaje natural a una expresión estructurada; el cálculo lo evalúa `mathjs`. Un modelo de lenguaje no es una calculadora, y el dinero no admite alucinaciones.
 - **Un JSON de dinero jamás se repara a mano.** Si la respuesta del modelo llega truncada, se vuelve a pedir (con temperatura distinta, porque a temperatura 0 el corte es determinista); nunca se completa por nuestra cuenta.
-- **Precisión medida, no prometida.** 30/30 en el conjunto de evaluación, 20/20 en el conjunto reservado, 0 errores en los 13 casos de dinero. Ver `backend/scripts/`.
+- **Precisión medida, no prometida.** 0 errores en 30 casos evaluados contra Gemini real (20 de ellos fuera de los ejemplos del prompt), y 0 en los 13 casos de dinero. Con esas muestras, la cota superior al 95% de confianza sobre la tasa de error es ~10% en el conjunto completo y ~23% en dinero: lo honesto es decir *"no detectamos errores"*, no *"100% de precisión"*. Ampliar la muestra es trabajo pendiente y declarado. Ver `backend/scripts/`.
 - **Transparencia como interfaz.** Cada resultado muestra la operación que se ejecutó y un nivel de confianza; las correcciones de ortografía se declaran ("corregí: dia → día").
 - **No-custodial por diseño.** CALC no recibe, guarda ni mueve dinero. La verificación en Solana registra solo un hash, y solo si el usuario lo pide.
 
