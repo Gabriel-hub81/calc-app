@@ -203,6 +203,36 @@ describe('POST /receipt — propuesta, cuadre y confirmación', () => {
     expect(q.body.gastos).toBe(0);
   });
 
+  test('ticket con descuentos (importes negativos) sí se guarda', async () => {
+    // Los tickets reales traen cupones y descuentos como renglones negativos.
+    // Mientras la suma cuadre con el total, es una compra perfectamente válida.
+    const propuesta = {
+      comercio: 'Super',
+      total_ticket: 65,
+      items: [
+        { name_raw: 'ACEITE', name_canonical: 'aceite', qty: 1, unit_price: 45, total: 45 },
+        { name_raw: 'JABON', name_canonical: 'jabon', qty: 1, unit_price: 30, total: 30 },
+        { name_raw: 'CUPON DE DESCUENTO', name_canonical: 'descuento', qty: 1, unit_price: -10, total: -10 }
+      ]
+    };
+    const res = await request(app).post('/receipt/confirm').set(auth('rosa')).send({ propuesta });
+
+    expect(res.status).toBe(200);
+    expect(res.body.guardado).toBe(true);
+    expect(res.body.resumen_dia.gastos).toBe(65);
+  });
+
+  test('renglón sin nombre canónico se salva con el texto leído', async () => {
+    const propuesta = {
+      total_ticket: 20,
+      items: [{ name_raw: 'CUPON (GARD VEGGIE)', qty: 1, unit_price: 20, total: 20 }]
+    };
+    const res = await request(app).post('/receipt/confirm').set(auth('rosa2')).send({ propuesta });
+
+    expect(res.status).toBe(200);
+    expect(res.body.entry.items[0].name_canonical).toBe('cupon (gard veggie)');
+  });
+
   test('confirm sin login → 401', async () => {
     const res = await request(app)
       .post('/receipt/confirm')

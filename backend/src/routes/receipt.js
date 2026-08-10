@@ -125,10 +125,16 @@ router.post('/confirm', requireAuth, async (req, res) => {
 
   for (const it of propuesta.items) {
     const qty = it.qty !== undefined ? it.qty : 1;
+    // Los importes negativos son legítimos: descuentos, cupones y devoluciones
+    // vienen así en los tickets reales. Quien vigila que no entre basura es el
+    // cuadre (la suma tiene que dar el total del ticket), no el signo.
+    // El nombre canónico se deriva del texto leído si el modelo no lo dio:
+    // un renglón con nombre y precio no debe bloquear una compra entera.
+    const nombre = it.name_canonical || it.name_raw;
     if (
-      typeof it.unit_price !== 'number' || !Number.isFinite(it.unit_price) || it.unit_price < 0 ||
+      typeof it.unit_price !== 'number' || !Number.isFinite(it.unit_price) ||
       typeof qty !== 'number' || !Number.isFinite(qty) || qty <= 0 ||
-      !it.name_canonical
+      !nombre
     ) {
       return res.status(400).json({
         error: true,
@@ -153,7 +159,7 @@ router.post('/confirm', requireAuth, async (req, res) => {
     description: `Ticket${propuesta.comercio ? ` ${propuesta.comercio}` : ''}`,
     items: propuesta.items.map((it) => ({
       name_raw: it.name_raw || it.name_canonical,
-      name_canonical: String(it.name_canonical).toLowerCase().trim(),
+      name_canonical: String(it.name_canonical || it.name_raw).toLowerCase().trim(),
       qty: it.qty !== undefined ? it.qty : 1,
       unit_price: round2(it.unit_price),
       total: round2(typeof it.total === 'number' ? it.total : (it.qty || 1) * it.unit_price)
