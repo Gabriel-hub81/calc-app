@@ -6,6 +6,7 @@ import { useLang } from '../lib/i18n';
 import { useReceipt } from '../hooks/useReceipt';
 import VoiceButton from './VoiceButton';
 import ReceiptCapture from './ReceiptCapture';
+import ComparisonCard from './ComparisonCard';
 import ReceiptConfirm from './ReceiptConfirm';
 import ResultCard from './ResultCard';
 import AmbiguityModal from './AmbiguityModal';
@@ -39,6 +40,9 @@ export default function Calculator({ setDia, setAlertas }) {
         setDia(resp.resumen_dia);
         setAlertas(resp.alertas_precio || []);
         setHistorial((h) => [...h.slice(-4), resp.mensaje]);
+        setTexto('');
+      } else if (resp.comparacion) {
+        setRespuesta({ kind: 'comparacion', data: resp });
         setTexto('');
       } else if (resp.consulta) {
         setRespuesta({ kind: 'consulta', data: resp });
@@ -132,6 +136,8 @@ export default function Calculator({ setDia, setAlertas }) {
       {(respuesta?.kind === 'resultado' || respuesta?.kind === 'registro') && (
         <ResultCard kind={respuesta.kind} data={respuesta.data} />
       )}
+
+      {respuesta?.kind === 'comparacion' && <ComparisonCard data={respuesta.data} />}
 
       {respuesta?.kind === 'consulta' && (
         <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">

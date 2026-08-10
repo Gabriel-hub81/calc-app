@@ -4,6 +4,7 @@ const { evaluateExpression, EvaluationError } = require('../services/evaluator')
 const { getStore } = require('../services/store');
 const { buildEntry, describeEntry, summarize, rangeFor, LedgerError } = require('../services/ledger');
 const { pricePointsFromEntry, alertsForItems } = require('../services/priceHelper');
+const { compararOpciones, ComparacionError } = require('../services/comparador');
 
 const router = express.Router();
 const MAX_INPUT_LENGTH = 500;
@@ -72,8 +73,39 @@ router.post('/', async (req, res) => {
 
   if (intent === 'register') return handleRegister(req, res, parsed, texto.trim());
   if (intent === 'query') return handleQuery(req, res, parsed);
+  if (intent === 'comparar') return handleComparar(req, res, parsed);
   return handleCalc(req, res, parsed);
 });
+
+/**
+ * "¿Cuál me conviene?" — compara presentaciones por precio unitario.
+ * No requiere sesión: es ayuda de cálculo, igual que un cálculo suelto, y es
+ * justo el momento en que sirve (parada frente al anaquel).
+ */
+function handleComparar(_req, res, parsed) {
+  if (parsed.tipo === 'ambiguo') return res.json(AMBIGUO(parsed));
+
+  try {
+    const respuesta = compararOpciones(parsed.opciones, parsed.idioma || 'es');
+    return res.json({ ...respuesta, correcciones: parsed.correcciones || {} });
+  } catch (err) {
+    if (err instanceof ComparacionError || err instanceof EvaluationError) {
+      return res.json({
+        error: true,
+        mensaje: err.message,
+        sugerencia:
+          err.sugerencia ||
+          "Dime el precio y el contenido de cada una. Ejemplo: 'la de 1 litro a 32 pesos o la de 3 litros a 89'",
+        idioma_detectado: parsed.idioma || 'es'
+      });
+    }
+    console.error('[comparador] error inesperado:', err.message);
+    return res.status(500).json({
+      error: true,
+      mensaje: 'Algo salió mal al comparar. Intenta de nuevo.'
+    });
+  }
+}
 
 function handleCalc(_req, res, parsed) {
   if (parsed.tipo === 'ambiguo') return res.json(AMBIGUO(parsed));

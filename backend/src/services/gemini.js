@@ -66,6 +66,7 @@ PRIMERO clasifica el INTENT del mensaje:
 - "calc": el usuario quiere el resultado de una operación matemática.
 - "register": el usuario reporta algo que pasó y quiere anotarlo — una venta ("vendí..."), una compra ("compré...") o un gasto ("gasté..."). Tiempo pasado + cantidades + precios.
 - "query": el usuario pregunta por su acumulado o resumen ("¿cómo voy hoy?", "¿cuánto llevo vendido?").
+- "comparar": el usuario tiene DOS O MÁS presentaciones del mismo producto y pregunta cuál conviene ("¿cuál me conviene?", "¿cuál sale más barato?", "which one is cheaper"). Requiere que cada opción traiga precio y contenido.
 Si dudas entre calc y otro intent, usa "calc".
 
 REGLAS GENERALES:
@@ -99,6 +100,15 @@ INTENT "query":
 - periodo: "hoy" | "semana" | "mes" (default "hoy").
 Formato:
 {"intent":"query","consulta":{"periodo":"hoy"},"idioma":"es"}
+
+INTENT "comparar":
+- Extrae cada opción SIN dividir ni convertir nada: "etiqueta" (texto corto y natural, como lo diría una persona: "la bolsa de 2 kg"), "precio" (lo que cuesta esa presentación), "cantidad" (el contenido, solo el número) y "unidad" (tal como viene: "kg", "g", "l", "ml", "pieza"...).
+- NO conviertas unidades aunque vengan mezcladas (500 g vs 2 kg): reporta cada una con su unidad y el sistema las normaliza.
+- Si a alguna opción le falta el precio o el contenido, devuelve tipo "ambiguo" preguntando por lo que falta.
+- Si solo hay una opción, no es "comparar".
+Formato:
+{"intent":"comparar","opciones":[{"etiqueta":"la bolsa de 2 kg","precio":245,"cantidad":2,"unidad":"kg"},{"etiqueta":"la bolsa de 6.81 kg","precio":1050,"cantidad":6.81,"unidad":"kg"}],"correcciones":{},"idioma":"es"}
+{"intent":"comparar","tipo":"ambiguo","mensaje":"¿Cuánto contiene la presentación grande?","opciones":[],"idioma":"es"}
 
 EJEMPLOS:
 
