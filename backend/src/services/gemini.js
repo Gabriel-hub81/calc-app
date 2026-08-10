@@ -177,6 +177,7 @@ async function generateJson(ai, request, maxRetries = 2) {
  * - calc: { intent, tipo: ok|ambiguo|error, ... }  (compatible con Sesión 1)
  * - register: { intent, registro } o { intent, tipo: "ambiguo", ... }
  * - query: { intent, consulta: { periodo } }
+ * - comparar: { intent, opciones: [{ etiqueta, precio, cantidad, unidad }] }
  */
 async function parseTexto(texto, idioma) {
   const ai = getClient();
@@ -192,7 +193,7 @@ async function parseTexto(texto, idioma) {
     }
   });
   parsed.intent = parsed.intent || 'calc';
-  if (!['calc', 'register', 'query'].includes(parsed.intent)) {
+  if (!['calc', 'register', 'query', 'comparar'].includes(parsed.intent)) {
     throw new Error(`Intent inesperado de Gemini: ${parsed.intent}`);
   }
   if (parsed.intent === 'calc' && !['ok', 'ambiguo', 'error'].includes(parsed.tipo)) {
