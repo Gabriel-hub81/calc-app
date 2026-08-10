@@ -58,6 +58,18 @@ export default function Calculator({ setDia, setAlertas }) {
     }
   };
 
+  // Si el ticket no se pudo leer, se dice por qué en vez de abrir una pantalla
+  // de confirmación vacía (que parecía "no reconoció ningún renglón").
+  const onReceiptFile = async (file) => {
+    const resp = await receipt.read(file);
+    if (resp?.error || resp?.requiere_login) {
+      setRespuesta({
+        kind: 'error',
+        data: { mensaje: resp.mensaje || t.genericError, sugerencia: resp.sugerencia }
+      });
+    }
+  };
+
   const onReceiptConfirmed = (resp) => {
     setDia(resp.resumen_dia);
     setAlertas(resp.alertas_precio || []);
@@ -85,7 +97,7 @@ export default function Calculator({ setDia, setAlertas }) {
         <div className="relative mt-2 flex items-center justify-between">
           <div className="flex items-center gap-1">
             <VoiceButton onText={(v) => setTexto(v)} />
-            <ReceiptCapture onFile={receipt.read} reading={receipt.reading} />
+            <ReceiptCapture onFile={onReceiptFile} reading={receipt.reading} />
           </div>
           <button
             onClick={() => enviar()}

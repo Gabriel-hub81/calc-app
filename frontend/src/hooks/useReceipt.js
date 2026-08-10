@@ -24,15 +24,25 @@ export function useReceipt({ getToken }) {
     setReading(true);
     try {
       const imagen_base64 = await compressImage(file);
+      // Leer el ticket exige sesión (es la operación más cara del backend):
+      // sin token el servidor responde 401 y no habría nada que confirmar.
+      const token = await getToken();
       const resp = await api('/receipt', {
-        body: { imagen_base64, mime_type: 'image/jpeg' }
+        body: { imagen_base64, mime_type: 'image/jpeg' },
+        token
       });
+      // Solo se abre la pantalla de confirmación si de verdad hay renglones;
+      // un error se devuelve para mostrarlo como mensaje, nunca como una
+      // lista vacía que parece que el ticket no se pudo leer.
+      if (!resp || resp.error || resp.requiere_login || !resp.propuesta) {
+        setProposal(null);
+        return resp || { error: true };
+      }
       setProposal(resp);
       return resp;
     } catch {
-      const err = { error: true };
-      setProposal(err);
-      return err;
+      setProposal(null);
+      return { error: true };
     } finally {
       setReading(false);
     }
