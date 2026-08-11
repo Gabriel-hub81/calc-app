@@ -13,6 +13,7 @@ require('dotenv').config();
 
 const { getStore } = require('../services/store');
 const priceWatch = require('./priceWatch');
+const accuracyGuard = require('./accuracyGuard');
 
 /** Adaptador de texto libre para los agentes (NUNCA para aritmética). */
 async function generarTexto(prompt) {
@@ -28,7 +29,20 @@ async function generarTexto(prompt) {
 }
 
 const AGENTES = {
-  'price-watch': () => priceWatch.ejecutar({ store: getStore(), generarTexto })
+  'price-watch': () => priceWatch.ejecutar({ store: getStore(), generarTexto }),
+  'accuracy-guard': async () => {
+    const { parseTexto } = require('../services/gemini');
+    const veredicto = await accuracyGuard.ejecutar({ parseTexto });
+    // Degradación = job fallido a propósito: Cloud Run lo marca en rojo y la
+    // alerta llega sola. "No pude evaluar" NO enciende la alarma.
+    if (veredicto.degradado) {
+      console.error(JSON.stringify(veredicto));
+      const err = new Error(veredicto.veredicto);
+      err.veredicto = veredicto;
+      throw err;
+    }
+    return veredicto;
+  }
 };
 
 async function main() {
