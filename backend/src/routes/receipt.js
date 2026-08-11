@@ -4,6 +4,7 @@ const { requireAuth } = require('../middleware/auth');
 const { getStore } = require('../services/store');
 const { summarize, rangeFor, round2, money } = require('../services/ledger');
 const { pricePointsFromEntry, alertsForItems } = require('../services/priceHelper');
+const usage = require('../services/usage');
 
 const router = express.Router();
 
@@ -66,6 +67,7 @@ router.post('/', async (req, res) => {
       sugerencia: 'Comprime la imagen a menos de 6 MB e intenta de nuevo.'
     });
   }
+  usage.registrar(req.uid, 'vision');
   const mime = mime_type || 'image/jpeg';
   if (!/^image\/(jpeg|png|webp|heic|heif)$/.test(mime)) {
     return res.status(400).json({

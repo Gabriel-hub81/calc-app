@@ -5,6 +5,7 @@ const { getStore } = require('../services/store');
 const { buildEntry, describeEntry, summarize, rangeFor, LedgerError } = require('../services/ledger');
 const { pricePointsFromEntry, alertsForItems } = require('../services/priceHelper');
 const { compararOpciones, ComparacionError } = require('../services/comparador');
+const usage = require('../services/usage');
 
 const router = express.Router();
 const MAX_INPUT_LENGTH = 500;
@@ -59,6 +60,7 @@ router.post('/', async (req, res) => {
 
   let parsed;
   try {
+    usage.registrar(req.uid, 'texto');
     parsed = await parseTexto(texto.trim(), idioma);
   } catch (err) {
     console.error('[gemini] fallo de parseo:', err.message);

@@ -68,13 +68,49 @@ describe('vigía de precios — a quién avisa y a quién no', () => {
     expect(r.map((c) => c.producto)).toEqual(['cafe', 'sal']);
   });
 
-  test('ignora bajadas de precio (aquí solo avisamos subidas)', () => {
-    expect(detectarSubidas([historial('aceite', [50, 50, 50, 30])], [], HOY)).toHaveLength(0);
+  test('una bajada ya no se ignora: se avisa como oportunidad', () => {
+    const r = detectarSubidas([historial('aceite', [50, 50, 50, 30])], [], HOY);
+    expect(r).toHaveLength(1);
+    expect(r[0].direccion).toBe('bajo');
+  });
+});
+
+describe('vigía de precios — oportunidades (bajadas)', () => {
+  test('avisa cuando algo está notoriamente más barato', () => {
+    const r = detectarSubidas([historial('aceite', [50, 52, 50, 38])], [], HOY);
+    expect(r).toHaveLength(1);
+    expect(r[0].direccion).toBe('bajo');
+    expect(r[0].diferencia_pct).toBe(25);
+    expect(r[0].diferencia_pesos).toBe(12.67); // siempre positivo, la dirección va aparte
+  });
+
+  test('el listón de las bajadas es más alto que el de las subidas', () => {
+    // -13% sería suficiente para avisar de una subida, no para sugerir comprar
+    expect(detectarSubidas([historial('arroz', [100, 100, 100, 87])], [], HOY)).toHaveLength(0);
+    expect(detectarSubidas([historial('arroz', [100, 100, 100, 113])], [], HOY)).toHaveLength(1);
+  });
+
+  test('el mensaje de bajada sugiere sin ordenar', () => {
+    const [c] = detectarSubidas([historial('aceite', [50, 52, 50, 38])], [], HOY);
+    const m = mensajeBase(c, 'es');
+    expect(m).toMatch(/más barato/);
+    expect(m).toMatch(/si te hace falta/);
+    expect(m).not.toMatch(/debes|tienes que/i);
+  });
+
+  test('a igual impacto, la subida se avisa antes que la bajada', () => {
+    const r = detectarSubidas(
+      [historial('sube', [100, 100, 100, 120]), historial('baja', [100, 100, 100, 80])],
+      [],
+      HOY
+    );
+    expect(r[0].direccion).toBe('subio');
   });
 });
 
 describe('vigía de precios — cómo lo dice', () => {
   const candidato = {
+    direccion: 'subio',
     producto: 'azucar',
     precio_ultimo: 25,
     promedio_anterior: 20.67,

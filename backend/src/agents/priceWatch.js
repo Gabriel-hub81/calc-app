@@ -21,6 +21,11 @@ const { round1, round2, money } = require('../services/ledger');
 
 const UMBRAL_PCT = 12; // subida mínima para molestar a alguien
 const UMBRAL_PESOS = 3; // y que además signifique algo en dinero
+// Las bajadas piden más evidencia que las subidas: una subida es una alerta
+// (te están cobrando de más), una bajada es una sugerencia de gastar. El
+// listón para sugerirle a alguien que compre debe ser más alto.
+const UMBRAL_BAJA_PCT = 15;
+const UMBRAL_BAJA_PESOS = 5;
 const DIAS_SILENCIO = 7; // no repetir el mismo producto antes de esto
 const MIN_COMPRAS_PREVIAS = 2; // con una sola compra no hay tendencia
 
@@ -52,7 +57,11 @@ function detectarSubidas(histories, avisosPrevios = [], ahora = new Date().toISO
 
     const pct = (ultima.unit_price / promedio - 1) * 100;
     const pesos = ultima.unit_price - promedio;
-    if (pct < UMBRAL_PCT || pesos < UMBRAL_PESOS) continue;
+
+    // Dos direcciones: subió (cuidado) o bajó (oportunidad de surtirse).
+    const subio = pct >= UMBRAL_PCT && pesos >= UMBRAL_PESOS;
+    const bajo = -pct >= UMBRAL_BAJA_PCT && -pesos >= UMBRAL_BAJA_PESOS;
+    if (!subio && !bajo) continue;
 
     // ¿ya le avisamos de esto hace poco?
     const yaAvisado = avisosPrevios.some(
@@ -64,30 +73,40 @@ function detectarSubidas(histories, avisosPrevios = [], ahora = new Date().toISO
     if (yaAvisado) continue;
 
     candidatos.push({
+      direccion: subio ? 'subio' : 'bajo',
       producto: h.name_canonical,
       precio_ultimo: round2(ultima.unit_price),
       promedio_anterior: round2(promedio),
-      diferencia_pct: round1(pct),
-      diferencia_pesos: round2(pesos),
+      diferencia_pct: round1(Math.abs(pct)),
+      diferencia_pesos: round2(Math.abs(pesos)),
       compras_consideradas: previas.length
     });
   }
 
-  // el que más pega en el bolsillo primero
-  candidatos.sort((a, b) => b.diferencia_pesos - a.diferencia_pesos);
+  // Primero lo que más pega en el bolsillo. A igualdad, las subidas antes que
+  // las bajadas: cuidar el dinero pesa más que la oportunidad de gastarlo.
+  candidatos.sort(
+    (a, b) =>
+      b.diferencia_pesos - a.diferencia_pesos ||
+      (a.direccion === 'subio' ? -1 : 1) - (b.direccion === 'subio' ? -1 : 1)
+  );
   return candidatos;
 }
 
 /** Mensaje de respaldo: se usa tal cual si Gemini no está disponible. */
 function mensajeBase(c, idioma = 'es') {
-  if (idioma === 'en') {
-    return `${cap(c.producto)} went up ${c.diferencia_pct}% (${money(
-      c.promedio_anterior
-    )} → ${money(c.precio_ultimo)}). Keep it in mind before buying.`;
+  const de = money(c.promedio_anterior);
+  const a = money(c.precio_ultimo);
+  if (c.direccion === 'bajo') {
+    if (idioma === 'en') {
+      return `${cap(c.producto)} is ${c.diferencia_pct}% cheaper than usual (${de} → ${a}). Good moment to stock up if you need it.`;
+    }
+    return `${cap(c.producto)} está ${c.diferencia_pct}% más barato que de costumbre (${de} → ${a}). Buen momento para surtirte si te hace falta.`;
   }
-  return `${cap(c.producto)} subió ${c.diferencia_pct}% (${money(c.promedio_anterior)} → ${money(
-    c.precio_ultimo
-  )}). Considéralo antes de comprar.`;
+  if (idioma === 'en') {
+    return `${cap(c.producto)} went up ${c.diferencia_pct}% (${de} → ${a}). Keep it in mind before buying.`;
+  }
+  return `${cap(c.producto)} subió ${c.diferencia_pct}% (${de} → ${a}). Considéralo antes de comprar.`;
 }
 
 /**
@@ -106,7 +125,7 @@ async function redactar(c, idioma, deps) {
         `informa, NUNCA des una orden ni digas que no compre algo (la persona decide); ` +
         `sin emojis, sin comillas, una sola frase.\n` +
         `Producto: ${c.producto}. Antes pagaba ${money(c.promedio_anterior)}. ` +
-        `Ahora ${money(c.precio_ultimo)}. Subió ${c.diferencia_pct}%.`
+        `Ahora ${money(c.precio_ultimo)}. ${c.direccion === 'bajo' ? 'Bajó' : 'Subió'} ${c.diferencia_pct}%.`
     );
     const limpio = String(texto || '').trim().replace(/^["']|["']$/g, '');
     // Guardas: si el modelo se pasa de largo o se pone mandón, mandamos el base
@@ -148,7 +167,8 @@ async function ejecutar({ store, generarTexto, ahora = new Date().toISOString(),
       for (const c of candidatos) {
         const mensaje = await redactar(c, 'es', { generarTexto });
         await store.addNotice(uid, {
-          tipo: 'precio_subio',
+          tipo: c.direccion === 'bajo' ? 'precio_bajo' : 'precio_subio',
+          direccion: c.direccion,
           agente: 'price-watch',
           producto: c.producto,
           precio_ultimo: c.precio_ultimo,
@@ -180,5 +200,7 @@ module.exports = {
   redactar,
   UMBRAL_PCT,
   UMBRAL_PESOS,
+  UMBRAL_BAJA_PCT,
+  UMBRAL_BAJA_PESOS,
   DIAS_SILENCIO
 };

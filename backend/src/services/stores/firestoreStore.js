@@ -89,6 +89,25 @@ class FirestoreStore {
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   }
 
+  /**
+   * Contador de uso por día y usuario. Un documento por día con incrementos
+   * atómicos: barato de escribir y suficiente para calcular el costo unitario.
+   */
+  async recordUsage(uid, tipo, dia) {
+    const { FieldValue } = require('@google-cloud/firestore');
+    await this.db
+      .collection('usage')
+      .doc(dia)
+      .collection('users')
+      .doc(uid)
+      .set({ [tipo]: FieldValue.increment(1), dia, uid }, { merge: true });
+  }
+
+  async getUsage(dia) {
+    const snap = await this.db.collection('usage').doc(dia).collection('users').get();
+    return snap.docs.map((d) => ({ uid: d.id, dia, texto: 0, vision: 0, ...d.data() }));
+  }
+
   async markNoticeRead(uid, noticeId) {
     await this._notices(uid).doc(noticeId).set({ leido: true }, { merge: true });
     return true;

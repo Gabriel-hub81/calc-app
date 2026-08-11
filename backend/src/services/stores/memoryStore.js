@@ -68,6 +68,18 @@ class MemoryStore {
     return since ? list.filter((n) => n.created_at >= since) : list;
   }
 
+  async recordUsage(uid, tipo, dia) {
+    if (!this.usage) this.usage = new Map();
+    const clave = `${dia}|${uid}`;
+    const actual = this.usage.get(clave) || { dia, uid, texto: 0, vision: 0 };
+    actual[tipo] = (actual[tipo] || 0) + 1;
+    this.usage.set(clave, actual);
+  }
+
+  async getUsage(dia) {
+    return [...(this.usage || new Map()).values()].filter((u) => u.dia === dia);
+  }
+
   async markNoticeRead(uid, noticeId) {
     const n = (this._user(uid).notices || []).find((x) => x.id === noticeId);
     if (n) n.leido = true;
