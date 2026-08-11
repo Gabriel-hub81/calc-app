@@ -61,6 +61,39 @@ class FirestoreStore {
     return doc.exists ? doc.data() : null;
   }
 
+  // --- Usadas por los agentes (trabajos programados) ---
+
+  /**
+   * IDs de todos los usuarios. listDocuments() incluye documentos "fantasma"
+   * (los que solo existen porque tienen subcolecciones), que es justo nuestro
+   * caso: nunca escribimos un documento de perfil en users/{uid}.
+   */
+  async listUserIds() {
+    const refs = await this.db.collection('users').listDocuments();
+    return refs.map((r) => r.id);
+  }
+
+  _notices(uid) {
+    return this.db.collection('users').doc(uid).collection('notices');
+  }
+
+  async addNotice(uid, notice) {
+    const ref = await this._notices(uid).add(notice);
+    return ref.id;
+  }
+
+  async getNotices(uid, { since } = {}) {
+    let q = this._notices(uid).orderBy('created_at', 'desc');
+    if (since) q = q.where('created_at', '>=', since);
+    const snap = await q.get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  }
+
+  async markNoticeRead(uid, noticeId) {
+    await this._notices(uid).doc(noticeId).set({ leido: true }, { merge: true });
+    return true;
+  }
+
   async getAllPriceHistories(uid) {
     const snap = await this._prices(uid).get();
     return snap.docs.map((d) => ({ product_id: d.id, ...d.data() }));

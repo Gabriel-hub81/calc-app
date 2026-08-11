@@ -7,6 +7,7 @@ import VisionSection from './components/VisionSection';
 import AuthButton from './components/AuthButton';
 import { LogoMark } from './components/Logo';
 import PrivacyNotice from './components/PrivacyNotice';
+import AgentNotices from './components/AgentNotices';
 
 function Shell() {
   const { t, lang, setLang } = useLang();
@@ -37,6 +38,7 @@ function Shell() {
       </header>
 
       <main className="mx-auto max-w-md px-4 pb-16 pt-6">
+        <AgentNotices />
         <h1 className="mb-4 text-center text-2xl font-bold">{t.tagline}</h1>
         <Calculator setDia={setDia} setAlertas={setAlertas} />
         {user && <DayPanel dia={dia} setDia={setDia} alertas={alertas} />}

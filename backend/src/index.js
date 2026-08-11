@@ -10,6 +10,7 @@ const calculateRouter = require('./routes/calculate');
 const receiptRouter = require('./routes/receipt');
 const pricesRouter = require('./routes/prices');
 const verifyRouter = require('./routes/verify');
+const noticesRouter = require('./routes/notices');
 const { createRateLimiters, createIpLimiters } = require('./middleware/rateLimit');
 const { optionalAuth, requireAuth } = require('./middleware/auth');
 
@@ -64,6 +65,8 @@ function createApp(options = {}) {
   app.use('/receipt', ...limits, requireAuth, receiptRouter);
   app.use('/prices', ...limits, pricesRouter);
   app.use('/verify', ...limits, verifyRouter);
+  // Avisos que dejaron los agentes mientras el usuario no estaba
+  app.use('/notices', ...limits, requireAuth, noticesRouter);
 
   // En producción el mismo servicio sirve la PWA (carpeta public/, generada
   // por el build del frontend en el Dockerfile). Un solo origen = sin CORS.

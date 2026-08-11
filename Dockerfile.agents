@@ -1,0 +1,17 @@
+# Imagen de los agentes (Cloud Run Jobs). Separada del servicio web a
+# propósito: un agente que se cae no debe tumbar la app, y viceversa.
+FROM node:24-slim
+WORKDIR /app
+
+COPY backend/package*.json ./
+RUN npm ci --omit=dev
+
+COPY backend/src/ ./src/
+COPY backend/tests/test_cases.json backend/tests/intent_cases.json ./tests/
+
+ENV NODE_ENV=production
+USER node
+# El agente a correr se pasa como argumento desde el job:
+#   gcloud run jobs update calc-agents --args=price-watch
+ENTRYPOINT ["node", "src/agents/run.js"]
+CMD ["price-watch"]

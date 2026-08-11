@@ -14,7 +14,7 @@ class MemoryStore {
 
   _user(uid) {
     if (!this.users.has(uid)) {
-      this.users.set(uid, { entries: [], prices: new Map() });
+      this.users.set(uid, { entries: [], prices: new Map(), notices: [] });
     }
     return this.users.get(uid);
   }
@@ -47,6 +47,31 @@ class MemoryStore {
 
   async getPriceHistory(uid, productId) {
     return this._user(uid).prices.get(productId) || null;
+  }
+
+  // --- Usadas por los agentes (trabajos programados) ---
+
+  async listUserIds() {
+    return [...this.users.keys()];
+  }
+
+  async addNotice(uid, notice) {
+    const u = this._user(uid);
+    if (!u.notices) u.notices = [];
+    const id = `n${++this.seq}`;
+    u.notices.push({ ...notice, id });
+    return id;
+  }
+
+  async getNotices(uid, { since } = {}) {
+    const list = this._user(uid).notices || [];
+    return since ? list.filter((n) => n.created_at >= since) : list;
+  }
+
+  async markNoticeRead(uid, noticeId) {
+    const n = (this._user(uid).notices || []).find((x) => x.id === noticeId);
+    if (n) n.leido = true;
+    return Boolean(n);
   }
 
   async getAllPriceHistories(uid) {
