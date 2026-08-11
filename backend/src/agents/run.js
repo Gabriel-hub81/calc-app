@@ -14,6 +14,7 @@ require('dotenv').config();
 const { getStore } = require('../services/store');
 const priceWatch = require('./priceWatch');
 const accuracyGuard = require('./accuracyGuard');
+const dailyClose = require('./dailyClose');
 
 /** Adaptador de texto libre para los agentes (NUNCA para aritmética). */
 async function generarTexto(prompt) {
@@ -30,6 +31,7 @@ async function generarTexto(prompt) {
 
 const AGENTES = {
   'price-watch': () => priceWatch.ejecutar({ store: getStore(), generarTexto }),
+  'daily-close': () => dailyClose.ejecutar({ store: getStore(), generarTexto }),
   'accuracy-guard': async () => {
     const { parseTexto } = require('../services/gemini');
     const veredicto = await accuracyGuard.ejecutar({ parseTexto });
