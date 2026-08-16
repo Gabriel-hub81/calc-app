@@ -157,17 +157,64 @@ function extractJson(text) {
 // determinista, y a temperature 0 el reintento reproduce el mismo corte.
 const RETRY_TEMPERATURE = 0.3;
 
+// Techo explícito de salida, como red de seguridad para tickets muy largos.
+//
+// OJO, para que nadie repita el diagnóstico equivocado: NO es la causa del
+// truncado que se vio en producción. Medido el 16/08/2026 con un ticket de 12
+// renglones, el corte llega con `finishReason=STOP`, no `MAX_TOKENS` — el
+// modelo decide parar solo, a media palabra, de forma determinista a
+// temperature 0. Lo que salva ese caso es el reintento a temperature 0.3 de
+// generateJson, no este techo. Se deja porque un ticket de despensa muy larga
+// sí podría toparse con el default, y porque cuesta cero.
+const MAX_OUTPUT_TOKENS = Number(process.env.GEMINI_MAX_OUTPUT_TOKENS || 8192);
+
+// Fallas TRANSITORIAS del lado de Google: el modelo saturado (503) o la cuota
+// del minuto (429). No son culpa de la petición y reintentarla suele funcionar.
+// Distinto de un JSON roto: aquí no llegó ni a haber respuesta.
+const TRANSITORIO = /\b(429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand/i;
+const ESPERA_BASE_MS = 700;
+
+const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Pide a Gemini aguantando que el servicio esté teniendo un mal día.
+ * Espera creciente (0.7s, 1.4s, 2.8s) para no empujar a un servidor caído.
+ */
+async function generarConReintento(ai, request, intentos = 3) {
+  for (let i = 0; ; i++) {
+    try {
+      return await ai.models.generateContent(request);
+    } catch (err) {
+      if (i >= intentos - 1 || !TRANSITORIO.test(err.message || '')) throw err;
+      const espera = ESPERA_BASE_MS * 2 ** i;
+      console.warn(`Gemini no disponible, reintentando en ${espera}ms (${i + 1}/${intentos - 1})`);
+      await esperar(espera);
+    }
+  }
+}
+
 async function generateJson(ai, request, maxRetries = 2) {
   for (let attempt = 0; ; attempt++) {
     const attemptRequest = attempt === 0
       ? request
       : { ...request, config: { ...request.config, temperature: RETRY_TEMPERATURE } };
-    const response = await ai.models.generateContent(attemptRequest);
+    const response = await generarConReintento(ai, attemptRequest);
     try {
       return extractJson(response.text);
     } catch (err) {
-      if (attempt >= maxRetries) throw err;
-      console.warn(`Gemini devolvió JSON inválido, reintentando (${attempt + 1}/${maxRetries}): ${err.message}`);
+      // finishReason distingue "el modelo se quedó sin presupuesto"
+      // (MAX_TOKENS) de "el modelo escribió basura" (STOP). Sin este dato el
+      // diagnóstico es adivinanza, y ya nos costó una tarde.
+      const razon = response.candidates?.[0]?.finishReason || 'desconocida';
+      const uso = response.usageMetadata || {};
+      if (attempt >= maxRetries) {
+        err.message += ` [finishReason=${razon}, salida=${uso.candidatesTokenCount || 0}, pensamiento=${uso.thoughtsTokenCount || 0}]`;
+        throw err;
+      }
+      console.warn(
+        `Gemini devolvió JSON inválido, reintentando (${attempt + 1}/${maxRetries}): ` +
+          `${err.message} [finishReason=${razon}, pensamiento=${uso.thoughtsTokenCount || 0}]`
+      );
     }
   }
 }
@@ -189,7 +236,8 @@ async function parseTexto(texto, idioma) {
     config: {
       systemInstruction: getSystemPrompt(),
       responseMimeType: 'application/json',
-      temperature: 0
+      temperature: 0,
+      maxOutputTokens: MAX_OUTPUT_TOKENS
     }
   });
   parsed.intent = parsed.intent || 'calc';
@@ -231,7 +279,10 @@ async function parseReceipt(imagenBase64, mimeType = 'image/jpeg') {
     config: {
       systemInstruction: RECEIPT_PROMPT,
       responseMimeType: 'application/json',
-      temperature: 0
+      temperature: 0,
+      // Un ticket de despensa larga son muchos renglones: es la llamada de
+      // CALC que más salida necesita y la que más se truncaba.
+      maxOutputTokens: MAX_OUTPUT_TOKENS
     }
   });
   if (!Array.isArray(parsed.items)) {
@@ -240,4 +291,12 @@ async function parseReceipt(imagenBase64, mimeType = 'image/jpeg') {
   return parsed;
 }
 
-module.exports = { parseTexto, parseReceipt, buildSystemPrompt, extractJson, generateJson, MODEL };
+module.exports = {
+  parseTexto,
+  parseReceipt,
+  buildSystemPrompt,
+  extractJson,
+  generateJson,
+  generarConReintento,
+  MODEL
+};

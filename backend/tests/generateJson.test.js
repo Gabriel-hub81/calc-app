@@ -51,3 +51,48 @@ describe('generateJson', () => {
     expect(ai.requests).toHaveLength(3); // 1 intento + 2 reintentos
   });
 });
+
+// --- Fallas transitorias de Gemini (503 saturado, 429 cuota del minuto) ---
+
+/** Cliente que truena `fallos` veces y luego responde bien. */
+function aiQueTruena(fallos, mensajeError, texto = COMPLETO) {
+  let intentos = 0;
+  return {
+    llamadas: () => intentos,
+    models: {
+      generateContent: async () => {
+        intentos += 1;
+        if (intentos <= fallos) throw new Error(mensajeError);
+        return { text: texto };
+      }
+    }
+  };
+}
+
+describe('generateJson — Gemini teniendo un mal día', () => {
+  test('un 503 no llega al usuario: se reintenta y sale bien', async () => {
+    // Pasó de verdad el 16/08/2026: el modelo saturado tiró la lectura de
+    // ticket en producción. La petición estaba bien; el servidor no.
+    const ai = aiQueTruena(1, '{"error":{"code":503,"status":"UNAVAILABLE"}}');
+    const parsed = await generateJson(ai, REQUEST);
+    expect(parsed.tipo).toBe('error');
+    expect(ai.llamadas()).toBe(2);
+  });
+
+  test('también reintenta la cuota del minuto (429)', async () => {
+    const ai = aiQueTruena(2, 'RESOURCE_EXHAUSTED: 429 quota');
+    await expect(generateJson(ai, REQUEST)).resolves.toBeDefined();
+    expect(ai.llamadas()).toBe(3);
+  });
+
+  test('si Gemini sigue caído, se rinde y avisa — no se inventa la respuesta', async () => {
+    const ai = aiQueTruena(99, '503 UNAVAILABLE');
+    await expect(generateJson(ai, REQUEST)).rejects.toThrow(/503/);
+  });
+
+  test('un error de la petición NO se reintenta: reintentarlo falla igual', async () => {
+    const ai = aiQueTruena(99, 'API key not valid');
+    await expect(generateJson(ai, REQUEST)).rejects.toThrow(/API key/);
+    expect(ai.llamadas()).toBe(1);
+  });
+});

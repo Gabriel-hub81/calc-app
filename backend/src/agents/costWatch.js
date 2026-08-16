@@ -14,10 +14,22 @@
 const { round2 } = require('../services/ledger');
 const { diaDe } = require('../services/usage');
 
-// Costo estimado por operación en USD. Ajustables sin tocar código.
-// Ojo: son ESTIMACIONES para orientar el precio, no la factura de Google.
-const COSTO_TEXTO_USD = Number(process.env.COSTO_TEXTO_USD || 0.0004);
-const COSTO_VISION_USD = Number(process.env.COSTO_VISION_USD || 0.004);
+// Costo por operación en USD. MEDIDO, no adivinado: el 16/08/2026 se corrieron
+// llamadas reales de CALC leyendo `usageMetadata` de la respuesta de Gemini.
+//
+//   texto  → entrada 2596 tok · salida 119 · pensamiento 417
+//   ticket → entrada 1099 tok · salida 797 · pensamiento 1439
+//
+// Tarifa de gemini-3.5-flash: $1.50 por millón de entrada, $9.00 de salida, y
+// el pensamiento se cobra como salida. De ahí:
+//   texto  = 2596/1e6*1.50 + (119+417)/1e6*9.00  = 0.0087
+//   ticket = 1099/1e6*1.50 + (797+1439)/1e6*9.00 = 0.0218
+//
+// Los valores anteriores (0.0004 y 0.004) eran suposiciones y subestimaban el
+// costo real 22 y 5 veces. Poner precio con esos números habría salido caro.
+// Siguen siendo estimaciones —no la factura de Google— pero ya de datos reales.
+const COSTO_TEXTO_USD = Number(process.env.COSTO_TEXTO_USD || 0.0087);
+const COSTO_VISION_USD = Number(process.env.COSTO_VISION_USD || 0.0218);
 const USD_MXN = Number(process.env.USD_MXN || 18);
 
 // Un día que gasta más de X veces el promedio reciente merece mirarse.
