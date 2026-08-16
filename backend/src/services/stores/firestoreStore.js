@@ -117,6 +117,36 @@ class FirestoreStore {
     const snap = await this._prices(uid).get();
     return snap.docs.map((d) => ({ product_id: d.id, ...d.data() }));
   }
+
+  // --- Precios de central de abasto (SNIIM) ---
+  //
+  //   mercados/{mercadoId}/dias/{yyyy-mm-dd}
+  //
+  // Colección de primer nivel a propósito: NO es dato de una usuaria, es dato
+  // público del mercado. Se raspa una vez al día y lo lee toda la app; ninguna
+  // petición de usuaria toca el sitio del gobierno.
+
+  _mercadoDias(mercadoId) {
+    return this.db.collection('mercados').doc(String(mercadoId)).collection('dias');
+  }
+
+  async saveMarketPrices(mercadoId, fecha, datos) {
+    await this._mercadoDias(mercadoId)
+      .doc(fecha)
+      .set({ mercado_id: String(mercadoId), fecha, ...datos }, { merge: true });
+  }
+
+  async getMarketPrices(mercadoId, fecha) {
+    const doc = await this._mercadoDias(mercadoId).doc(fecha).get();
+    return doc.exists ? doc.data() : null;
+  }
+
+  /** El día más reciente que se alcanzó a guardar. Si SNIIM se cayó hoy, la
+   *  app sigue respondiendo con lo de ayer en vez de quedarse muda. */
+  async getLatestMarketPrices(mercadoId) {
+    const snap = await this._mercadoDias(mercadoId).orderBy('fecha', 'desc').limit(1).get();
+    return snap.empty ? null : snap.docs[0].data();
+  }
 }
 
 module.exports = { FirestoreStore };

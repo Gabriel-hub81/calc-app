@@ -9,6 +9,7 @@ class MemoryStore {
 
   reset() {
     this.users = new Map(); // uid -> { entries: [], prices: Map<productId, history> }
+    this.mercados = new Map(); // "mercadoId|fecha" -> precios de central de abasto
     this.seq = 0;
   }
 
@@ -91,6 +92,28 @@ class MemoryStore {
       product_id,
       ...h
     }));
+  }
+
+  // --- Precios de central de abasto (SNIIM) ---
+  // Ojo: NO cuelgan de un usuario. Son dato público del mercado, iguales para
+  // todas: se raspan una vez al día y sirven a toda la app.
+
+  async saveMarketPrices(mercadoId, fecha, datos) {
+    this.mercados.set(`${mercadoId}|${fecha}`, { mercado_id: String(mercadoId), fecha, ...datos });
+  }
+
+  async getMarketPrices(mercadoId, fecha) {
+    return this.mercados.get(`${mercadoId}|${fecha}`) || null;
+  }
+
+  /** El día más reciente que se alcanzó a guardar. Si SNIIM se cayó hoy, la
+   *  app sigue respondiendo con lo de ayer en vez de quedarse muda. */
+  async getLatestMarketPrices(mercadoId) {
+    return (
+      [...this.mercados.values()]
+        .filter((d) => d.mercado_id === String(mercadoId))
+        .sort((a, b) => b.fecha.localeCompare(a.fecha))[0] || null
+    );
   }
 }
 

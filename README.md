@@ -23,6 +23,35 @@ Funciona sin registro (calculadora); entrar con correo o teléfono habilita guar
 - **Transparencia como interfaz.** Cada resultado muestra la operación que se ejecutó y un nivel de confianza; las correcciones de ortografía se declaran ("corregí: dia → día").
 - **No-custodial por diseño.** CALC no recibe, guarda ni mueve dinero. La verificación en Solana registra solo un hash, y solo si el usuario lo pide.
 
+## Los agentes: lo que CALC hace sin que nadie se lo pida
+
+Cinco agentes corren solos, todos los días, como Cloud Run Jobs disparados por
+Cloud Scheduler. Sin laptop encendida, sin sesión abierta, con reintentos y con
+los logs de cada corrida en Cloud Logging. En todos rige la misma regla: los
+números los calcula el código; Gemini solo escoge las palabras.
+
+| Agente | Hora (CDMX) | Qué hace solo |
+|---|---|---|
+| `market-watch` | 5:30 | Consulta SNIIM (Secretaría de Economía) para 28 productos en la Central de Abasto de Iztapalapa, guarda la foto del día y avisa **una** oportunidad real de la semana |
+| `accuracy-guard` | 6:30 | Examen sorpresa contra Gemini real; si la precisión se degrada, falla el job a propósito y suena la alarma |
+| `price-watch` | 7:00 | Revisa el historial de cada usuaria y avisa subidas y bajadas **antes** de la próxima compra |
+| `cost-watch` | 8:00 | Vigila el gasto en API por usuaria; un pico falla el job y llega el correo |
+| `daily-close` | 21:00 | Cierra la cuenta del día antes de dormir |
+
+`market-watch` existe porque `price-watch` tiene un arranque en frío medible:
+necesita tres compras del mismo producto para poder decir algo, y sus logs
+mostraban `avisos_creados=0` día tras día. Los precios de central de abasto son
+públicos y no dependen del historial de nadie: CALC sirve desde el día uno.
+
+Ese dato, además, es el único que nadie más cubre. Brasil (NF-e) y Argentina
+(SEPA) construyen sus comparadores de precios sobre **comprobantes fiscales**,
+así que el comercio informal les queda estructuralmente fuera. La central de
+abasto y el tianguis no emiten factura.
+
+> **Es mayoreo, no el súper.** Todo aviso nombra la central y aclara que es
+> precio de central. Prometer un precio de tienda con datos de mayoreo sería
+> mentir, y una sola mentira comprobable tira la confianza de todo lo demás.
+
 ## Estructura del monorepo
 
 | Carpeta | Contenido | Estado |

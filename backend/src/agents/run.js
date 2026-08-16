@@ -16,6 +16,7 @@ const priceWatch = require('./priceWatch');
 const accuracyGuard = require('./accuracyGuard');
 const dailyClose = require('./dailyClose');
 const costWatch = require('./costWatch');
+const marketWatch = require('./marketWatch');
 
 /** Adaptador de texto libre para los agentes (NUNCA para aritmética). */
 async function generarTexto(prompt) {
@@ -33,6 +34,15 @@ async function generarTexto(prompt) {
 const AGENTES = {
   'price-watch': () => priceWatch.ejecutar({ store: getStore(), generarTexto }),
   'daily-close': () => dailyClose.ejecutar({ store: getStore(), generarTexto }),
+  // Raspa la central de abasto (SNIIM). Acepta el mercado por variable de
+  // entorno: agregar una segunda central es un renglón más en el Scheduler,
+  // no código nuevo.
+  'market-watch': () =>
+    marketWatch.ejecutar({
+      store: getStore(),
+      generarTexto,
+      ...(process.env.SNIIM_MERCADO ? { mercadoId: process.env.SNIIM_MERCADO } : {})
+    }),
   'cost-watch': async () => {
     const veredicto = await costWatch.ejecutar({ store: getStore() });
     // Un pico de gasto falla el job → llega el correo de alerta. El costo por
