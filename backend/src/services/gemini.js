@@ -257,8 +257,15 @@ REGLAS:
 2. TRANSCRIBE, no calcules: copia los precios y totales tal como aparecen en el ticket. NUNCA "cuadres" ni corrijas números — si el ticket dice algo, eso reportas. La validación la hace otro sistema.
 3. NUNCA inventes artículos ni precios. Si un renglón es ilegible, omítelo y agrégalo a "ilegibles" con lo que alcances a leer.
 4. "name_canonical": nombre genérico del producto, en minúsculas, normalizado ("ACEITE NUTRIOLI 850ML" → "aceite vegetal 850ml", "JITOMATE SALADET KG" → "jitomate kg").
-5. qty: si el ticket muestra peso (kg) usa el peso como qty y el precio por kg como unit_price.
-6. Si no encuentras fecha o comercio, usa null.
+5. qty: si el ticket muestra peso (kg) usa el peso como qty y el precio por kg como unit_price. El campo "total" es SIEMPRE el importe impreso del renglón, aunque no sea igual a qty * unit_price (Costco imprime el peso en la línea de ARRIBA y el importe abajo).
+6. DESCUENTOS: todo descuento, cupón, promoción, monedero o bonificación va como un renglón MÁS, con "total" NEGATIVO. Esto incluye:
+   a) los que aparecen entre los artículos ("CUPON DE DESCUENTO   76.47-"), y
+   b) MUY IMPORTANTE, el descuento global que aparece ABAJO, en el bloque de totales, entre el subtotal y el total ("Sub-total 3,581.12 / Descuento 80.42- / Total 3,500.70"). Ese se olvida con facilidad y sin el no cuadra el ticket.
+   Ojo con el signo: muchos tickets ponen el menos DESPUÉS del número ("80.42-"). Sigue siendo negativo.
+   Prueba antes de responder: la suma de los "total" de todos los renglones debe dar "total_ticket". Si te sobra dinero, te faltó un descuento.
+7. "total_ticket" es el TOTAL FINAL a pagar, nunca el subtotal.
+8. NO incluyas como renglones el IVA desglosado, los pagos ("DEBITO"), el saldo de recompensas ni las líneas informativas: no son artículos ni afectan el total.
+9. Si no encuentras fecha o comercio, usa null.
 
 FORMATO:
 {"comercio":"Soriana","fecha":"2026-06-11","moneda":"MXN","items":[{"name_raw":"ACEITE NUTRIOLI 850ML","name_canonical":"aceite vegetal 850ml","qty":1,"unit_price":45.00,"total":45.00}],"total_ticket":800.00,"ilegibles":[]}`;

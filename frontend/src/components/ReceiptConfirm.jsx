@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Check, LoaderCircle, TriangleAlert, X } from 'lucide-react';
+import { Check, LoaderCircle, Plus, TriangleAlert, Trash2, X } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { useLang } from '../lib/i18n';
 
@@ -59,6 +59,21 @@ export default function ReceiptConfirm({ proposal, onConfirm, saving, onConfirme
     );
   };
 
+  /**
+   * La lectura automática a veces se salta un renglón — sobre todo el
+   * descuento global que los tickets imprimen abajo, en el bloque de totales.
+   * Sin poder agregarlo a mano, la usuaria se queda atorada con el botón de
+   * guardar bloqueado y sin salida. Esta pantalla es para corregir; tiene que
+   * poder corregir TODO, no solo lo que el modelo alcanzó a ver.
+   */
+  const agregarRenglon = () =>
+    setItems((prev) => [
+      ...prev,
+      { name_raw: '', name_canonical: '', qty: 1, unit_price: 0, total: 0 }
+    ]);
+
+  const quitarRenglon = (i) => setItems((prev) => prev.filter((_, j) => j !== i));
+
   const confirmar = async () => {
     setServerError(null);
     const propuesta = {
@@ -110,15 +125,16 @@ export default function ReceiptConfirm({ proposal, onConfirm, saving, onConfirme
             <p className="mb-3 text-sm text-slate-500">{proposal.propuesta.comercio}</p>
           )}
 
-          <div className="mb-2 grid grid-cols-[1fr_2.75rem_4rem_4.5rem] gap-1.5 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-400">
+          <div className="mb-2 grid grid-cols-[1fr_2.5rem_3.75rem_4.25rem_1.5rem] gap-1 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-400">
             <span>{t.receiptItem}</span>
             <span className="text-right">{t.receiptQty}</span>
             <span className="text-right">{t.receiptPrice}</span>
             <span className="text-right">{t.receiptAmount}</span>
+            <span />
           </div>
 
           {items.map((it, i) => (
-            <div key={i} className="mb-2 grid grid-cols-[1fr_2.75rem_4rem_4.5rem] items-center gap-1.5">
+            <div key={i} className="mb-2 grid grid-cols-[1fr_2.5rem_3.75rem_4.25rem_1.5rem] items-center gap-1">
               <input
                 value={it.name_canonical || it.name_raw || ''}
                 onChange={(e) => setItem(i, 'name_canonical', e.target.value)}
@@ -149,8 +165,22 @@ export default function ReceiptConfirm({ proposal, onConfirm, saving, onConfirme
                     : 'border-slate-200'
                 }`}
               />
+              <button
+                onClick={() => quitarRenglon(i)}
+                aria-label={t.receiptRemoveRow}
+                className="justify-self-center text-slate-300 hover:text-red-500"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
             </div>
           ))}
+
+          <button
+            onClick={agregarRenglon}
+            className="mt-1 flex items-center gap-1 text-sm font-semibold text-calc"
+          >
+            <Plus className="h-4 w-4" /> {t.receiptAddRow}
+          </button>
 
           <div className="mt-4 space-y-1 border-t border-slate-100 pt-3 text-sm">
             <div className="flex justify-between text-slate-500">
