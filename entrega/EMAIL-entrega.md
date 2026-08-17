@@ -24,7 +24,7 @@ https://github.com/Gabriel-hub81/calc-app
 https://calc-912626857437.us-central1.run.app
 
 **Demo video (3 minutes):**
-[PEGA AQUÍ EL ENLACE DE YOUTUBE / DRIVE]
+https://drive.google.com/file/d/1k00DYVODjOMY4CxwQiAObdHI8r2m5KBp/view
 
 **What to look for in the repository**
 
@@ -49,7 +49,9 @@ Julian Vera
 
 ## Antes de enviar
 
-- [ ] Pegar el enlace del video donde dice `[PEGA AQUÍ...]`
-- [ ] Abrir los tres enlaces en una ventana de incógnito para confirmar que
-      funcionan sin tu sesión
+- [ ] **PENDIENTE — el video en Drive está RESTRINGIDO.** Compartir →
+      Acceso general → "Cualquier persona con el enlace" → Lector.
+      Verificado el 17/08: sin sesión devuelve HTTP 401. Un juez vería
+      "Solicitar acceso" y contaría como artefacto faltante.
+- [ ] Volver a probar los tres enlaces en una ventana de incógnito
 - [ ] Enviar a las dos direcciones en el mismo correo
