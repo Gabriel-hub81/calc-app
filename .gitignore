@@ -15,3 +15,6 @@ node_modules/
 
 # Generado por el build de producción (Dockerfile)
 backend/public/
+
+# Grabaciones de pantalla: pesan demasiado para el repo
+*.mov
