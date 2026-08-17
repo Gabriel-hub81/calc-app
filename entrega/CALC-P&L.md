@@ -25,45 +25,53 @@ definition. We are reporting that exclusion rather than working around it.
 
 ## Costs (excluding marketing)
 
-| Item | Amount | Basis |
-|---|---|---|
-| Gemini API (language + vision) | $3 – $6 | Bottom-up, see method below |
-| Cloud Run (service + 5 jobs) | $0.00 | Within free tier |
-| Firestore | $0.00 | Within free tier |
-| Cloud Scheduler | $0.20 / month | 5 jobs; 3 free per billing account |
-| Cloud Build, Artifact Registry, Cloud Logging | < $1.00 | Container images and build minutes |
-| Domain / hosting | $0.00 | Served on the default `run.app` domain |
-| **Total operating cost** | **≈ $5 – $8** | For the full life of the project |
+Source: Google Cloud Billing report for the project
+`gen-lang-client-0089539356`. These are billed amounts, not estimates.
 
-### How the Gemini figure was calculated
+| Period | Gross cost | Credits / savings | Net cost |
+|---|---|---|---|
+| June 2026 (from the 11th) | [PENDIENTE] | | [PENDIENTE] |
+| July 2026 | [PENDIENTE] | | [PENDIENTE] |
+| August 1–17, 2026 | $39.88 | $1.18 | **$38.70** |
+| **Total for the period** | | | **[SUMA]** |
 
-We did not estimate this from a price list. We ran real CALC requests and read
-`usageMetadata` off the model's own responses on August 16, 2026:
+The cost is almost entirely Gemini API consumption — language parsing, vision
+for receipts, and the daily evaluation harness. Infrastructure is a rounding
+error by design: the Cloud Run service scales to zero between requests, the
+five agents run as scheduled jobs rather than always-on processes, and
+Firestore usage sits inside the free tier.
+
+| Component | Note |
+|---|---|
+| Gemini API (language + vision + evaluation) | The large majority of the total |
+| Cloud Run — service and 5 jobs | Scales to zero; no minimum instances configured |
+| Firestore | Within free tier |
+| Cloud Scheduler | 5 jobs; 3 free per billing account |
+| Cloud Build, Artifact Registry, Cloud Logging | 19 container images; under $1/month |
+| Domain / hosting | $0.00 — served on the default `run.app` domain |
+
+### A note on our own estimate
+
+Before pulling the billing report we reconstructed this figure bottom-up:
+counted API calls in production logs, multiplied by a cost per call we had
+**measured** by reading `usageMetadata` off real model responses:
 
 | Operation | Input | Output | Thinking | Cost per call |
 |---|---|---|---|---|
-| Text question | 2,596 tok | 119 | 417 | **$0.0087** |
-| Receipt photo | 1,099 tok | 797 | 1,439 | **$0.0218** |
+| Text question | 2,596 tok | 119 | 417 | $0.0087 |
+| Receipt photo | 1,099 tok | 797 | 1,439 | $0.0218 |
 
-At the published `gemini-3.5-flash` rate of $1.50 per million input tokens and
-$9.00 per million output tokens, with thinking tokens billed as output.
+That reconstruction produced roughly $5–8, and **it was wrong by about five
+times.** The per-call figures hold; what the method missed was development
+consumption that never appears in production request logs — chiefly the
+accuracy evaluation harness, which runs 30 test cases against the live model
+and was executed many times over three months of development.
 
-Calls counted in production logs:
-
-| Source | Calls | Cost |
-|---|---|---|
-| Accuracy-guard agent (12 cases × 7 runs) | 84 text | $0.73 |
-| User text requests (`/calculate`) | 25 text | $0.22 |
-| User receipt photos (`/receipt`) | 37 vision | $0.81 |
-| Market-watch and daily-close agents | 3 text | $0.03 |
-| **Subtotal, individually logged** | | **$1.79** |
-| Development and evaluation runs before usage instrumentation existed | not individually logged | est. $2 – $4 |
-
-**The authoritative figure is the Google Cloud billing report**, not this
-reconstruction. This bottom-up calculation is offered as a cross-check and as
-evidence that we measure our unit economics rather than guess at them.
-
----
+We are reporting this rather than quietly replacing one number with the other,
+because the gap is itself the finding: our per-user unit economics are sound,
+but our *development* consumption was invisible to us until we looked at the
+bill. That is exactly the kind of blind spot the `cost-watch` agent was built
+to close, and it currently only watches production.
 
 ## Marketing and customer acquisition
 
@@ -83,9 +91,10 @@ We have spent nothing on acquisition. This is a real zero, not an omission.
 | | Amount |
 |---|---|
 | Revenue | $0.00 |
-| Operating cost | ≈ $5 – $8 |
+| Operating cost (August 1–17, billed) | $38.70 |
+| Operating cost (June + July, billed) | [PENDIENTE] |
 | Marketing | $0.00 |
-| **Net** | **≈ –$5 to –$8** |
+| **Net** | **[SUMA NEGATIVA]** |
 
 ---
 
