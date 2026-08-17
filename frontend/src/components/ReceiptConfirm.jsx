@@ -18,20 +18,45 @@ export default function ReceiptConfirm({ proposal, onConfirm, saving, onConfirme
     (proposal.propuesta?.items || []).map((it) => ({
       ...it,
       qty: it.qty ?? 1,
-      unit_price: it.unit_price ?? 0
+      unit_price: it.unit_price ?? 0,
+      // El IMPORTE del renglón es el dato mandón, igual que en el backend.
+      // Un ticket de Costco imprime "2.845 kg @ 433.64 /kg" y abajo el importe
+      // real: cantidad por precio unitario NO da ese importe. Recalcular aquí
+      // inflaba la suma casi $2,000 y bloqueaba el botón de guardar con un
+      // ticket que en realidad cuadraba perfecto.
+      total: typeof it.total === 'number' ? it.total : (it.qty ?? 1) * (it.unit_price ?? 0)
     }))
   );
   const [totalTicket, setTotalTicket] = useState(proposal.propuesta?.total_ticket ?? 0);
   const [serverError, setServerError] = useState(null);
 
   const suma = useMemo(
-    () => round2(items.reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.unit_price) || 0), 0)),
+    () => round2(items.reduce((s, it) => s + (Number(it.total) || 0), 0)),
     [items]
   );
   const cuadra = Math.abs(suma - Number(totalTicket)) <= Math.max(0.01, Number(totalTicket) * 0.01);
 
+  /**
+   * Mantiene coherente el renglón mientras la usuaria edita:
+   * - toca cantidad o precio unitario → se recalcula el importe
+   * - toca el importe → se recalcula el precio unitario (que es el derivado)
+   * Así el precio que se guarda en el historial es el precio por unidad de
+   * verdad, no el importe del renglón disfrazado de precio.
+   */
   const setItem = (i, campo, valor) => {
-    setItems((prev) => prev.map((it, j) => (j === i ? { ...it, [campo]: valor } : it)));
+    setItems((prev) =>
+      prev.map((it, j) => {
+        if (j !== i) return it;
+        const next = { ...it, [campo]: valor };
+        if (campo === 'qty' || campo === 'unit_price') {
+          next.total = round2((Number(next.qty) || 0) * (Number(next.unit_price) || 0));
+        } else if (campo === 'total') {
+          const q = Number(next.qty) || 0;
+          if (q > 0) next.unit_price = round2((Number(next.total) || 0) / q);
+        }
+        return next;
+      })
+    );
   };
 
   const confirmar = async () => {
@@ -42,7 +67,10 @@ export default function ReceiptConfirm({ proposal, onConfirm, saving, onConfirme
         ...it,
         qty: Number(it.qty),
         unit_price: Number(it.unit_price),
-        total: round2(Number(it.qty) * Number(it.unit_price)),
+        // Se manda el importe que la usuaria vio y aprobó en pantalla. Volver
+        // a multiplicar aquí reintroduciría el descuadre por la puerta de
+        // atrás, justo después de que ella confirmó que estaba bien.
+        total: round2(Number(it.total)),
         name_canonical: it.name_canonical || it.name_raw
       })),
       total_ticket: Number(totalTicket)
@@ -82,14 +110,15 @@ export default function ReceiptConfirm({ proposal, onConfirm, saving, onConfirme
             <p className="mb-3 text-sm text-slate-500">{proposal.propuesta.comercio}</p>
           )}
 
-          <div className="mb-2 grid grid-cols-[1fr_3.5rem_5rem] gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <div className="mb-2 grid grid-cols-[1fr_2.75rem_4rem_4.5rem] gap-1.5 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-400">
             <span>{t.receiptItem}</span>
             <span className="text-right">{t.receiptQty}</span>
             <span className="text-right">{t.receiptPrice}</span>
+            <span className="text-right">{t.receiptAmount}</span>
           </div>
 
           {items.map((it, i) => (
-            <div key={i} className="mb-2 grid grid-cols-[1fr_3.5rem_5rem] items-center gap-2">
+            <div key={i} className="mb-2 grid grid-cols-[1fr_2.75rem_4rem_4.5rem] items-center gap-1.5">
               <input
                 value={it.name_canonical || it.name_raw || ''}
                 onChange={(e) => setItem(i, 'name_canonical', e.target.value)}
@@ -100,14 +129,25 @@ export default function ReceiptConfirm({ proposal, onConfirm, saving, onConfirme
                 inputMode="decimal"
                 value={it.qty}
                 onChange={(e) => setItem(i, 'qty', e.target.value)}
-                className="rounded-lg border border-slate-200 px-2 py-1.5 text-right text-sm"
+                className="rounded-lg border border-slate-200 px-1 py-1.5 text-right text-sm"
               />
               <input
                 type="number"
                 inputMode="decimal"
                 value={it.unit_price}
                 onChange={(e) => setItem(i, 'unit_price', e.target.value)}
-                className="rounded-lg border border-slate-200 px-2 py-1.5 text-right text-sm"
+                className="rounded-lg border border-slate-200 px-1.5 py-1.5 text-right text-sm"
+              />
+              <input
+                type="number"
+                inputMode="decimal"
+                value={it.total}
+                onChange={(e) => setItem(i, 'total', e.target.value)}
+                className={`rounded-lg border px-1.5 py-1.5 text-right text-sm font-medium ${
+                  Number(it.total) < 0
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                    : 'border-slate-200'
+                }`}
               />
             </div>
           ))}

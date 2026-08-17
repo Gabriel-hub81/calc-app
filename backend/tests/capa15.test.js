@@ -190,6 +190,71 @@ describe('POST /receipt — propuesta, cuadre y confirmación', () => {
     expect(res.body.entry.source).toBe('receipt');
   });
 
+  // --- Renglones por peso: el caso del ticket de Costco (16/08/2026) ---
+  //
+  // Costco imprime "2.845 kg @ 433.64 /kg" en la línea de ARRIBA y el importe
+  // real abajo. El modelo copia el importe como precio unitario, así que
+  // cantidad × precio unitario da $1,233.71 para un renglón que dice $433.64.
+  // La pantalla multiplicaba y bloqueaba el botón de guardar en un ticket que
+  // cuadraba perfecto. Manda el IMPORTE; el precio unitario se deriva.
+  const porPeso = (kg, importe) => ({
+    name_raw: 'MOLIDA DE RES',
+    name_canonical: 'carne molida de res kg',
+    qty: kg,
+    unit_price: importe, // <- lo que el modelo lee mal
+    total: importe
+  });
+
+  test('un renglón por peso cuadra por su importe, no por cantidad × precio', async () => {
+    parseReceipt.mockResolvedValue(ticket([porPeso(2.845, 433.64), aceite(45)], 478.64));
+    const res = await request(app)
+      .post('/receipt')
+      .set(auth('user1'))
+      .send({ imagen_base64: 'Zm90bw==' });
+
+    expect(res.body.status).toBe('ok');
+    expect(res.body.suma_articulos).toBe(478.64);
+  });
+
+  test('el precio por kilo se corrige para no envenenar el historial', async () => {
+    // Si se guardara 433.64 como precio por kilo de la carne molida, mañana el
+    // vigía de precios avisaría subidas y bajadas contra un precio inventado.
+    parseReceipt.mockResolvedValue(ticket([porPeso(2.845, 433.64)], 433.64));
+    const res = await request(app)
+      .post('/receipt')
+      .set(auth('user1'))
+      .send({ imagen_base64: 'Zm90bw==' });
+
+    const renglon = res.body.propuesta.items[0];
+    expect(renglon.total).toBe(433.64); // el importe NO se toca
+    expect(renglon.unit_price).toBe(152.42); // 433.64 / 2.845
+    expect(renglon.unit_price_leido).toBe(433.64); // queda rastro de lo leído
+  });
+
+  test('un renglón coherente no se toca', async () => {
+    parseReceipt.mockResolvedValue(ticket([{ ...aceite(45), qty: 2, total: 90 }], 90));
+    const res = await request(app)
+      .post('/receipt')
+      .set(auth('user1'))
+      .send({ imagen_base64: 'Zm90bw==' });
+
+    expect(res.body.propuesta.items[0].unit_price).toBe(45);
+    expect(res.body.propuesta.items[0].unit_price_leido).toBeUndefined();
+  });
+
+  test('los descuentos negativos sobreviven la reconciliación', async () => {
+    const cupon = { name_raw: 'CUPON DE DESCUENTO', name_canonical: 'descuento',
+      qty: 1, unit_price: -76.47, total: -76.47 };
+    parseReceipt.mockResolvedValue(ticket([aceite(100), cupon], 23.53));
+    const res = await request(app)
+      .post('/receipt')
+      .set(auth('user1'))
+      .send({ imagen_base64: 'Zm90bw==' });
+
+    expect(res.body.status).toBe('ok');
+    expect(res.body.propuesta.items[1].total).toBe(-76.47);
+  });
+
   test('confirm con propuesta que no cuadra → 422 y NO se guarda', async () => {
     const res = await request(app)
       .post('/receipt/confirm')

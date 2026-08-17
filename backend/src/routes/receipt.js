@@ -12,6 +12,38 @@ const MAX_IMAGE_BASE64_CHARS = 8 * 1024 * 1024; // ~6 MB de imagen real
 const CUADRE_TOLERANCIA = 0.01; // ±1% del total del ticket
 
 /**
+ * Reconcilia el renglón cuando cantidad × precio unitario NO da el importe.
+ *
+ * Pasa de verdad y seguido: Costco imprime el peso en la línea de ARRIBA
+ * ("2.845 kg @ 433.64 /kg") y el importe en la de abajo. El modelo copia el
+ * importe como precio unitario, y entonces 2.845 × 433.64 = $1,233.71 para un
+ * renglón que en el ticket dice $433.64.
+ *
+ * Manda el IMPORTE, porque es el número que suma al total impreso — se
+ * verificó contra un ticket real: los importes daban el subtotal al centavo.
+ * El precio unitario es un derivado y se recalcula.
+ *
+ * Esto NO es "reparar un JSON de dinero a mano": no se inventa ni se ajusta
+ * ningún importe, se elige cuál de dos campos leídos por OCR manda y se
+ * deriva el otro. El importe y el total del ticket se quedan intactos, y la
+ * usuaria ve el resultado y lo confirma antes de que se guarde nada.
+ */
+function reconciliarRenglones(propuesta) {
+  const items = Array.isArray(propuesta.items) ? propuesta.items : [];
+  return {
+    ...propuesta,
+    items: items.map((it) => {
+      const qty = Number(it.qty);
+      const pu = Number(it.unit_price);
+      if (typeof it.total !== 'number' || !Number.isFinite(qty) || qty <= 0) return it;
+      // Un centavo de holgura: el redondeo del ticket no es un conflicto.
+      if (Math.abs(qty * pu - it.total) <= 0.01) return it;
+      return { ...it, unit_price: round2(it.total / qty), unit_price_leido: pu };
+    })
+  };
+}
+
+/**
  * Validación de cuadre — NO NEGOCIABLE: la suma de los artículos debe
  * coincidir con el total del ticket. Si no cuadra, se reporta; nunca se
  * guarda en silencio un ticket que no cuadra.
@@ -97,9 +129,10 @@ router.post('/', async (req, res) => {
     });
   }
 
-  const cuadre = validarCuadre(propuesta);
+  const propuestaSana = reconciliarRenglones(propuesta);
+  const cuadre = validarCuadre(propuestaSana);
   return res.json({
-    propuesta,
+    propuesta: propuestaSana,
     status: cuadre.status,
     suma_articulos: cuadre.suma_articulos,
     diferencia: cuadre.diferencia,
