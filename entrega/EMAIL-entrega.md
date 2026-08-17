@@ -24,7 +24,7 @@ https://github.com/Gabriel-hub81/calc-app
 https://calc-912626857437.us-central1.run.app
 
 **Demo video (3 minutes):**
-https://drive.google.com/file/d/1k00DYVODjOMY4CxwQiAObdHI8r2m5KBp/view
+https://drive.google.com/file/d/1k00DYVODjOMY4CxwQiAObdHI8r2m5KBp/view?usp=sharing
 
 **What to look for in the repository**
 
@@ -49,9 +49,9 @@ Julian Vera
 
 ## Antes de enviar
 
-- [ ] **PENDIENTE — el video en Drive está RESTRINGIDO.** Compartir →
-      Acceso general → "Cualquier persona con el enlace" → Lector.
-      Verificado el 17/08: sin sesión devuelve HTTP 401. Un juez vería
-      "Solicitar acceso" y contaría como artefacto faltante.
-- [ ] Volver a probar los tres enlaces en una ventana de incógnito
+- [x] **Los tres enlaces verificados sin sesión el 17/08:**
+      repositorio 200 · aplicación 200 · video 200. Del video se descargaron
+      los 54,942,755 bytes completos de forma anónima — el mismo tamaño que
+      el archivo original, así que un juez puede verlo entero sin pedir
+      acceso a nadie.
 - [ ] Enviar a las dos direcciones en el mismo correo
