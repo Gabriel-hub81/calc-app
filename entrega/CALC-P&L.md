@@ -73,6 +73,90 @@ The measured unit cost and the invoice agree. That matters more to us than the
 size of the number: it means the per-user economics below rest on something we
 can verify, not on a price list we read once.
 
+---
+
+## Expense breakdown
+
+Total billed: **$42.28 MXN (≈ $2.35 USD)** for the life of the project,
+June 11 – August 17, 2026.
+
+| Category | MXN | ≈ USD | % of total |
+|---|---|---|---|
+| Cost of goods sold (cost to serve) | $18.90 | $1.05 | **45%** |
+| Research and development | $23.38 | $1.30 | **55%** |
+| Sales and marketing | $0.00 | $0.00 | **0%** |
+| General and administrative | $0.00 | $0.00 | **0%** |
+
+Allocation method: every line is a count of Gemini API calls taken from
+production logs, multiplied by a cost per call measured from `usageMetadata`
+on real responses ($0.0087 per text call, $0.0218 per receipt). The residual
+between the counted calls and the invoice is assigned to R&D, because
+development and evaluation traffic does not appear in request logs. All
+infrastructure fell inside free tiers and contributes $0.00 to every category.
+
+### (1) COGS — 45%
+
+| Driver | ≈ USD |
+|---|---|
+| Receipt photographs — 37 vision calls | $0.81 |
+| Natural-language questions — 25 text calls | $0.22 |
+| Agents producing user-facing output | $0.03 |
+| Infrastructure serving those requests | $0.00 |
+
+**Drivers.** Vision dominates: a receipt costs 2.5x a text question ($0.0218
+vs $0.0087), so 37 photographs account for 77% of the cost to serve. Inside
+each call the real driver is thinking tokens, which are billed at the output
+rate — 417 tokens of thinking against 119 of visible answer on a text call,
+1,439 against 797 on a receipt. A 2,596-token system prompt also rides along
+on every text request. Infrastructure contributes nothing because the service
+scales to zero and the agents are scheduled jobs rather than always-on
+workers.
+
+Strictly speaking there is no COGS, because there were no goods sold. We
+report cost-to-serve as the closest analogue: this is the line that becomes
+COGS the day someone pays.
+
+### (2) Sales and marketing — 0%
+
+No advertising, no paid acquisition, no referral incentives, no sponsorships.
+**Driver: we have not attempted acquisition yet.** This is a real zero, and it
+is the reason we have no arms-length revenue to report.
+
+### (3) R&D — 55%
+
+| Driver | ≈ USD |
+|---|---|
+| Accuracy evaluation agent — 12 cases graded daily against the live model | $0.73 |
+| Development and testing traffic outside request logs | $0.57 |
+
+**Drivers.** The largest single recurring expense in the entire business is an
+agent that grades our own model every morning. That is deliberate: quality
+degradation in a product that handles money must be detected the day it
+happens, not the week a user complains. The second driver is iteration — every
+change to receipt handling had to be re-tested against the real model, and 32
+of our 34 commits landed in August, which is why 92% of all spending falls in
+the final two weeks.
+
+R&D exceeding COGS is the expected shape for a pre-revenue project ten weeks
+old, and we would be worried if it were reversed.
+
+### (4) G&A — 0%
+
+No legal entity, no payroll, no office, no accounting software, no
+administrative subscriptions billed to the project.
+
+**Driver worth noting:** the function that would normally sit in G&A — knowing
+what we spend and what each user costs — is performed by an agent
+(`cost-watch`) that runs daily at zero marginal cost, because it does its
+arithmetic in code and calls no model. Our finance function is automated and
+free.
+
+### A caveat on precision
+
+The whole expense base is $2.35 USD. The percentages are directionally real
+and the method is documented, but at this scale a handful of API calls moves a
+category by several points. These figures describe how we spend, not how much.
+
 ## Marketing and customer acquisition
 
 | Item | Amount |
