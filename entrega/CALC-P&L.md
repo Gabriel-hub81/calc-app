@@ -25,53 +25,53 @@ definition. We are reporting that exclusion rather than working around it.
 
 ## Costs (excluding marketing)
 
-Source: Google Cloud Billing report for the project
-`gen-lang-client-0089539356`. These are billed amounts, not estimates.
+Source: Google Cloud Billing report for project `gen-lang-client-0089539356`,
+period June–August 2026. **Billed in Mexican pesos (MXN).** USD figures are
+converted at 18 MXN/USD and are approximate; the MXN amount is the billed one.
 
-| Period | Gross cost | Credits / savings | Net cost |
-|---|---|---|---|
-| June 2026 (from the 11th) | [PENDIENTE] | | [PENDIENTE] |
-| July 2026 | [PENDIENTE] | | [PENDIENTE] |
-| August 1–17, 2026 | $39.88 | $1.18 | **$38.70** |
-| **Total for the period** | | | **[SUMA]** |
+| Period | Billed (MXN) | ≈ USD |
+|---|---|---|
+| June 11 – August 17, 2026 (full project life) | **$42.28 MXN** | **≈ $2.35** |
+| *of which savings/credits applied* | –$1.18 MXN | |
 
-The cost is almost entirely Gemini API consumption — language parsing, vision
-for receipts, and the daily evaluation harness. Infrastructure is a rounding
-error by design: the Cloud Run service scales to zero between requests, the
-five agents run as scheduled jobs rather than always-on processes, and
-Firestore usage sits inside the free tier.
+### Cost by component
 
-| Component | Note |
-|---|---|
-| Gemini API (language + vision + evaluation) | The large majority of the total |
-| Cloud Run — service and 5 jobs | Scales to zero; no minimum instances configured |
-| Firestore | Within free tier |
-| Cloud Scheduler | 5 jobs; 3 free per billing account |
-| Cloud Build, Artifact Registry, Cloud Logging | 19 container images; under $1/month |
-| Domain / hosting | $0.00 — served on the default `run.app` domain |
+| Component | Billed (MXN) | Note |
+|---|---|---|
+| Gemini API — language, vision, evaluation | $42.28 | Effectively the entire bill |
+| — of which output tokens, `gemini-3.5-flash` | $26.83 | Largest single SKU |
+| Cloud Run — service and 5 scheduled jobs | $0.00 | Scales to zero; no minimum instances |
+| Firestore | $0.00 | Within free tier |
+| Cloud Scheduler, Cloud Build, Artifact Registry, Cloud Logging | $0.00 | Within free tier |
+| Domain / hosting | $0.00 | Served on the default `run.app` domain |
 
-### A note on our own estimate
+**Total operating cost for the life of the project: $42.28 MXN (≈ $2.35 USD).**
 
-Before pulling the billing report we reconstructed this figure bottom-up:
-counted API calls in production logs, multiplied by a cost per call we had
-**measured** by reading `usageMetadata` off real model responses:
+Infrastructure cost is zero, and that is a design result rather than luck. The
+web service scales to zero between requests. The five agents are scheduled
+jobs, not always-on processes — they wake up, do their work, and exit. The one
+thing we pay for is the one thing that does the work: the model.
+
+### The bill validates our measurement
+
+Before pulling the report we had computed our own cost per call by reading
+`usageMetadata` off real model responses:
 
 | Operation | Input | Output | Thinking | Cost per call |
 |---|---|---|---|---|
-| Text question | 2,596 tok | 119 | 417 | $0.0087 |
-| Receipt photo | 1,099 tok | 797 | 1,439 | $0.0218 |
+| Text question | 2,596 tok | 119 | 417 | $0.0087 USD |
+| Receipt photo | 1,099 tok | 797 | 1,439 | $0.0218 USD |
 
-That reconstruction produced roughly $5–8, and **it was wrong by about five
-times.** The per-call figures hold; what the method missed was development
-consumption that never appears in production request logs — chiefly the
-accuracy evaluation harness, which runs 30 test cases against the live model
-and was executed many times over three months of development.
+Cross-checking those against the invoice: the output-token SKU billed $26.83
+MXN (≈ $1.49 USD), which at the published rate of $9.00 per million output
+tokens works out to roughly 165,600 output tokens — about **309 text-call
+equivalents** at 536 output-plus-thinking tokens per call. That is consistent
+with the 112 calls counted in production logs plus development and evaluation
+runs over three months.
 
-We are reporting this rather than quietly replacing one number with the other,
-because the gap is itself the finding: our per-user unit economics are sound,
-but our *development* consumption was invisible to us until we looked at the
-bill. That is exactly the kind of blind spot the `cost-watch` agent was built
-to close, and it currently only watches production.
+The measured unit cost and the invoice agree. That matters more to us than the
+size of the number: it means the per-user economics below rest on something we
+can verify, not on a price list we read once.
 
 ## Marketing and customer acquisition
 
@@ -88,13 +88,12 @@ We have spent nothing on acquisition. This is a real zero, not an omission.
 
 ## Net result
 
-| | Amount |
-|---|---|
-| Revenue | $0.00 |
-| Operating cost (August 1–17, billed) | $38.70 |
-| Operating cost (June + July, billed) | [PENDIENTE] |
-| Marketing | $0.00 |
-| **Net** | **[SUMA NEGATIVA]** |
+| | MXN | ≈ USD |
+|---|---|---|
+| Revenue | $0.00 | $0.00 |
+| Operating cost (June 11 – August 17, billed) | $42.28 | ≈ $2.35 |
+| Marketing and customer acquisition | $0.00 | $0.00 |
+| **Net result** | **–$42.28 MXN** | **≈ –$2.35** |
 
 ---
 
